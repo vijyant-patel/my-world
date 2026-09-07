@@ -6,3 +6,4 @@ django-filter>=24.1
 psycopg2-binary>=2.9
 dj-database-url>=2.1
 Pillow>=10.0
+celery==5.x.x
