@@ -79,16 +79,14 @@ TEMPLATES = [
 #     # }
 # }
 
-import os
 import dj_database_url
 
 DATABASES = {
     "default": dj_database_url.config(
-        default="postgresql://postgres:root@localhost:5432/lrv",
         conn_max_age=600,
+        conn_health_checks=True,
     )
 }
-
 if os.environ.get("DATABASE_URL"):
     try:
         import dj_database_url
