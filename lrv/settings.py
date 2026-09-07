@@ -63,28 +63,40 @@ TEMPLATES = [
     },
 ]
 
-import os
-import dj_database_url
+# Database: set DATABASE_URL for PostgreSQL (use dj-database-url); else SQLite for dev
+DATABASES = {
+    # "default": {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME': 'lrv',  # Database name
+    #     'USER': 'postgres',
+    #     'PASSWORD': 'root',
+    #     'HOST': 'localhost',
+    #     'PORT': '5432',  # Use default port for PostgreSQL
+    # }
 
-if os.getenv("DATABASE_URL"):
-    DATABASES = {
-        "default": dj_database_url.config(
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
-    }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": "lrv",
-            "USER": "postgres",
-            "PASSWORD": "root",
-            "HOST": "localhost",
-            "PORT": "5432",
-        }
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "neondb",
+        "USER": "neondb_owner",
+        "PASSWORD": "YOUR_NEW_NEON_PASSWORD",
+        "HOST": "ep-silent-breeze-ae8f7got-pooler.c-2.us-east-2.aws.neon.tech",
+        "PORT": "5432",
+        "OPTIONS": {
+            "sslmode": "require",
+        },
     }
 
+    # "default": {
+    #     "ENGINE": "django.db.backends.sqlite3",
+    #     "NAME": BASE_DIR / "db.sqlite3",
+    # }
+}
+if os.environ.get("DATABASE_URL"):
+    try:
+        import dj_database_url
+        DATABASES["default"] = dj_database_url.config(conn_max_age=600)
+    except ImportError:
+        pass
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
