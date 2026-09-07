@@ -63,36 +63,28 @@ TEMPLATES = [
     },
 ]
 
-# Database: set DATABASE_URL for PostgreSQL (use dj-database-url); else SQLite for dev
-# DATABASES = {
-#     "default": {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'lrv',  # Database name
-#         'USER': 'postgres',
-#         'PASSWORD': 'root',
-#         'HOST': 'localhost',
-#         'PORT': '5432',  # Use default port for PostgreSQL
-#     }
-#     # "default": {
-#     #     "ENGINE": "django.db.backends.sqlite3",
-#     #     "NAME": BASE_DIR / "db.sqlite3",
-#     # }
-# }
-
+import os
 import dj_database_url
 
-DATABASES = {
-    "default": dj_database_url.config(
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
-}
-if os.environ.get("DATABASE_URL"):
-    try:
-        import dj_database_url
-        DATABASES["default"] = dj_database_url.config(conn_max_age=600)
-    except ImportError:
-        pass
+if os.getenv("DATABASE_URL"):
+    DATABASES = {
+        "default": dj_database_url.config(
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": "lrv",
+            "USER": "postgres",
+            "PASSWORD": "root",
+            "HOST": "localhost",
+            "PORT": "5432",
+        }
+    }
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
