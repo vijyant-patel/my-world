@@ -73,6 +73,11 @@ TEMPLATES = [
 #         'HOST': 'localhost',
 #         'PORT': '5432',  # Use default port for PostgreSQL
 #     }
+#     # "default": {
+#     #     "ENGINE": "django.db.backends.sqlite3",
+#     #     "NAME": BASE_DIR / "db.sqlite3",
+#     # }
+# }
 
 import os
 import dj_database_url
@@ -84,11 +89,6 @@ DATABASES = {
     )
 }
 
-    # "default": {
-    #     "ENGINE": "django.db.backends.sqlite3",
-    #     "NAME": BASE_DIR / "db.sqlite3",
-    # }
-}
 if os.environ.get("DATABASE_URL"):
     try:
         import dj_database_url
