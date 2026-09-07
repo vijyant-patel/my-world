@@ -64,15 +64,26 @@ TEMPLATES = [
 ]
 
 # Database: set DATABASE_URL for PostgreSQL (use dj-database-url); else SQLite for dev
+# DATABASES = {
+#     "default": {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'lrv',  # Database name
+#         'USER': 'postgres',
+#         'PASSWORD': 'root',
+#         'HOST': 'localhost',
+#         'PORT': '5432',  # Use default port for PostgreSQL
+#     }
+
+import os
+import dj_database_url
+
 DATABASES = {
-    "default": {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'lrv',  # Database name
-        'USER': 'postgres',
-        'PASSWORD': 'root',
-        'HOST': 'localhost',
-        'PORT': '5432',  # Use default port for PostgreSQL
-    }
+    "default": dj_database_url.config(
+        default="postgresql://postgres:root@localhost:5432/lrv",
+        conn_max_age=600,
+    )
+}
+
     # "default": {
     #     "ENGINE": "django.db.backends.sqlite3",
     #     "NAME": BASE_DIR / "db.sqlite3",
