@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cricket Dashboard - ERP{% endblock %}
+
+{% block extra_css %}
+<!-- Bootstrap 5 CSS for ERP-style UI -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    /* Light-themed ERP Sidebar styling */
+    .cricket-wrapper {
+        display: flex;
+        min-height: calc(100vh - 60px);
+        background-color: #f8f9fa;
+        font-family: 'DM Sans', sans-serif;
+    }
+    .cricket-sidebar {
+        width: 250px;
+        background-color: #ffffff;
+        border-right: 1px solid #dee2e6;
+        padding-top: 1rem;
+    }
+    .cricket-sidebar .list-group-item {
+        border: none;
+        padding: 0.75rem 1.25rem;
+        color: #495057;
+        font-weight: 500;
+        border-radius: 0;
+    }
+    .cricket-sidebar .list-group-item:hover, .cricket-sidebar .list-group-item.active {
+        background-color: #e9ecef;
+        color: #0d6efd;
+    }
+    .cricket-sidebar .list-group-item.active {
+        border-right: 4px solid #0d6efd;
+    }
+    .cricket-content {
+        flex-grow: 1;
+        padding: 2rem;
+        background-color: #f8f9fa;
+    }
+    /* Hide the BookBrief header components if needed or just let it sit below it */
+    .site-footer {
+        display: none; /* ERP dashboards often don't need the public footer */
+    }
+</style>
+{% endblock %}
+
+{% block body_class %}cricket-layout{% endblock %}
+{% block container_class %}container-fluid px-0{% endblock %}
+
+{% block content %}
+<div class="cricket-wrapper">
+    <!-- ERP Sidebar -->
+    <nav class="cricket-sidebar shadow-sm">
+        <div class="px-3 mb-4">
+            <h5 class="text-primary fw-bold">Cricket System</h5>
+            <small class="text-muted">ERP Module</small>
+        </div>
+        <div class="list-group list-group-flush">
+            <a href="{% url 'cricket:dashboard' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                Dashboard
+            </a>
+            <a href="{% url 'cricket:matches' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'matches' %}active{% endif %}">
+                Match Center
+            </a>
+            <a href="{% url 'cricket:teams' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'teams' %}active{% endif %}">
+                Teams
+            </a>
+            <a href="{% url 'cricket:players' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'players' %}active{% endif %}">
+                Players
+            </a>
+            <a href="{% url 'cricket:betting' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'betting' %}active{% endif %}">
+                Betting History
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="cricket-content">
+        {% block cricket_content %}{% endblock %}
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Bootstrap 5 JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

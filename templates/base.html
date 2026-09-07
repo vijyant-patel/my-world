@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BookBrief – Book Summary Platform{% endblock %}</title>
+    {% block meta_description %}{% endblock %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+    <style>
+        .module-switcher {
+            position: relative;
+            display: inline-block;
+            margin-right: 1.5rem;
+        }
+        .module-switcher:hover .module-dropdown {
+            display: block;
+        }
+        .module-btn {
+            cursor: pointer;
+            font-weight: 600;
+            color: #111827;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            background: #f3f4f6;
+            transition: background 0.2s;
+        }
+        .module-btn:hover {
+            background: #e5e7eb;
+        }
+        .module-dropdown {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
+            z-index: 1000;
+            border-radius: 4px;
+            list-style: none;
+            padding: 0.5rem 0;
+            top: 100%;
+            left: 0;
+            border: 1px solid #e5e7eb;
+        }
+        .module-dropdown a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            font-size: 0.95rem;
+        }
+        .module-dropdown a:hover {
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="{% block body_class %}layout-default{% endblock %}">
+    <a href="#main" class="skip-link">Skip to main content</a>
+    <header class="site-header" role="banner">
+        <div class="container header-inner" style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center;">
+                <div class="module-switcher">
+                    <div class="module-btn">Modules ▼</div>
+                    <div class="module-dropdown">
+                        <a href="{% url 'home' %}">📚 Book Brief</a>
+                        <a href="{% url 'cricket:dashboard' %}">🏏 Cricket</a>
+                        <a href="{% url 'interviews:dashboard' %}">💼 Interviews</a>
+                        <a href="{% url 'project_management:project_list' %}">📊 Tasks</a>
+                        <a href="{% url 'todos:dashboard' %}">✅ Todos</a>
+                        <a href="{% url 'money_management:dashboard' %}">💰 Money</a>
+                    </div>
+                </div>
+                <a href="{% url 'home' %}" class="logo">LRV ERP</a>
+            </div>
+            <nav class="nav" aria-label="Main" id="main-nav">
+                {% block module_nav %}{% endblock %}
+                {% if user.is_authenticated %}
+                    <a href="{% url 'profile_edit' %}">Profile</a>
+                    <a href="{% url 'logout' %}">Logout</a>
+                {% else %}
+                    <a href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">Login</a>
+                    <a href="{% url 'register' %}">Register</a>
+                {% endif %}
+                <a href="{% url 'admin:index' %}">Admin</a>
+            </nav>
+            <button class="nav-toggle" aria-label="Toggle menu" type="button"></button>
+        </div>
+    </header>
+    <main id="main" class="main" role="main">
+        <div class="container {% block container_class %}{% endblock %}">
+            {% if messages %}
+                <ul class="messages" role="alert">
+                    {% for message in messages %}
+                        <li class="message message-{{ message.tags }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    <footer class="site-footer" role="contentinfo">
+        <div class="container">
+            <p>BookBrief – Read less, remember more.</p>
+            <nav class="footer-nav" aria-label="Footer">
+                <a href="{% url 'home' %}">Home</a>
+                <a href="{% url 'book_list' %}">Books</a>
+                <a href="{% url 'summary_list' %}">Summaries</a>
+            </nav>
+        </div>
+    </footer>
+    <script>
+        document.querySelector('.nav-toggle')?.addEventListener('click', function() {
+            document.querySelector('.nav').classList.toggle('is-open');
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

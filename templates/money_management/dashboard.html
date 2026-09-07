@@ -1,0 +1,854 @@
+{% extends "base.html" %}
+
+{% block title %}Money Management | LRV{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --fin-bg: #f8fafc;
+        --fin-card: #ffffff;
+        --fin-text-main: #0f172a;
+        --fin-text-muted: #64748b;
+        --fin-primary: #0ea5e9;
+        --fin-success: #10b981;
+        --fin-danger: #ef4444;
+        --fin-warning: #f59e0b;
+        --fin-border: #e2e8f0;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --radius: 12px;
+    }
+
+    body {
+        background-color: var(--fin-bg);
+    }
+
+    .fin-layout {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+        font-family: 'Inter', -apple-system, sans-serif;
+    }
+
+    .fin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 2.5rem;
+    }
+
+    .fin-header h1 {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: var(--fin-text-main);
+        margin: 0 0 0.5rem 0;
+        letter-spacing: -0.02em;
+    }
+
+    .fin-header p {
+        color: var(--fin-text-muted);
+        margin: 0;
+        font-size: 1.05rem;
+    }
+
+    /* Hero Grid */
+    .hero-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .stat-card {
+        background: var(--fin-card);
+        border: 1px solid var(--fin-border);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .stat-title {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        color: var(--fin-text-muted);
+        margin-bottom: 0.75rem;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--fin-text-main);
+    }
+
+    .val-positive { color: var(--fin-success); }
+    .val-negative { color: var(--fin-danger); }
+
+    /* Sections */
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: var(--fin-text-main);
+    }
+
+    .two-col {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+    }
+
+    @media (max-width: 900px) {
+        .two-col { grid-template-columns: 1fr; }
+    }
+
+    /* Cards */
+    .card {
+        background: var(--fin-card);
+        border: 1px solid var(--fin-border);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Insights */
+    .insight-item {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .insight-high { background: #fef2f2; border-left: 4px solid var(--fin-danger); }
+    .insight-med { background: #fffbeb; border-left: 4px solid var(--fin-warning); }
+    .insight-ai { background: #f0f9ff; border-left: 4px solid var(--fin-primary); }
+
+    .insight-icon {
+        font-size: 1.5rem;
+    }
+
+    /* Data Lists */
+    .data-list {
+        background: var(--fin-card);
+        border: 1px solid var(--fin-border);
+        border-radius: var(--radius);
+        margin-bottom: 2rem;
+        overflow-y: auto;
+        max-height: 400px;
+    }
+    
+    /* Tabs */
+    .tabs-nav {
+        display: flex;
+        gap: 1.5rem;
+        border-bottom: 1px solid var(--fin-border);
+        margin-bottom: 2rem;
+    }
+    .tab-btn {
+        background: none;
+        border: none;
+        padding: 0.75rem 0;
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--fin-text-muted);
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s;
+    }
+    .tab-btn:hover { color: var(--fin-text-main); }
+    .tab-btn.active {
+        color: var(--fin-primary);
+        border-bottom-color: var(--fin-primary);
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    
+    .data-item {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--fin-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .data-item:last-child { border-bottom: none; }
+    
+    .data-item-title { font-weight: 600; color: var(--fin-text-main); margin-bottom: 0.25rem; }
+    .data-item-meta { font-size: 0.85rem; color: var(--fin-text-muted); }
+    
+    .insight-content h4 {
+        margin: 0 0 0.25rem 0;
+        font-size: 1rem;
+        color: var(--fin-text-main);
+    }
+    
+    .insight-content p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--fin-text-muted);
+    }
+    
+    /* Purchase Affordability Result */
+    #afford-result {
+        margin-top: 1rem;
+        padding: 1rem;
+        border-radius: 8px;
+        display: none;
+    }
+    .afford-yes { background: #dcfce7; border: 1px solid #22c55e; color: #166534; }
+    .afford-no { background: #fee2e2; border: 1px solid #ef4444; color: #991b1b; }
+    .afford-plan { background: #fef9c3; border: 1px solid #eab308; color: #854d0e; }
+
+    /* Action Buttons */
+    .action-group {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .btn-action {
+        padding: 0.75rem 1.25rem;
+        border-radius: var(--radius);
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+        font-size: 0.95rem;
+    }
+
+    .btn-primary { background: var(--fin-primary); color: white; }
+    .btn-primary:hover { background: #0284c7; }
+    
+    .btn-secondary { background: white; color: var(--fin-text-main); border: 1px solid var(--fin-border); }
+    .btn-secondary:hover { background: #f1f5f9; }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s;
+        z-index: 50;
+    }
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+    
+    .modal-content {
+        background: white;
+        border-radius: var(--radius);
+        width: 100%;
+        max-width: 400px;
+        padding: 1.5rem;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        transform: scale(0.95);
+        transition: transform 0.2s;
+    }
+    .modal-overlay.open .modal-content { transform: scale(1); }
+    
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .modal-header h3 { margin: 0; font-size: 1.25rem; color: var(--fin-text-main); }
+    .btn-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--fin-text-muted); }
+    
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--fin-text-muted); margin-bottom: 0.5rem; }
+    .form-control { width: 100%; padding: 0.75rem; border: 1px solid var(--fin-border); border-radius: 6px; font-size: 0.95rem; box-sizing: border-box; }
+    .form-control:focus { outline: none; border-color: var(--fin-primary); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fin-layout">
+    <header class="fin-header">
+        <div>
+            <h1>Money Management</h1>
+            <p id="dashboard-date">Loading financial snapshot...</p>
+        </div>
+        <div class="action-group">
+            <button class="btn-action" style="background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white;" onclick="openModal('purchaseModal')">🎯 Can I Afford This?</button>
+            <button class="btn-action btn-secondary" onclick="openModal('salaryModal')">+ Add Salary</button>
+            <button class="btn-action btn-secondary" onclick="openModal('debtModal')">+ Add Debt</button>
+            <button class="btn-action btn-primary" onclick="openModal('transactionModal')">+ Add Transaction</button>
+        </div>
+    </header>
+
+    <div class="hero-grid">
+        <div class="stat-card">
+            <div class="stat-title">Net Worth</div>
+            <div class="stat-value" id="stat-net-worth">₹--</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Total Cash / Assets</div>
+            <div class="stat-value val-positive" id="stat-assets">₹--</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Total Debt</div>
+            <div class="stat-value val-negative" id="stat-liabilities">₹--</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Monthly Surplus</div>
+            <div class="stat-value" id="stat-surplus">₹--</div>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchTab('tab-overview', this)">Overview</button>
+        <button class="tab-btn" onclick="switchTab('tab-debts', this)">Debts & Strategies</button>
+        <button class="tab-btn" onclick="switchTab('tab-settings', this)">Settings & Income</button>
+    </div>
+
+    <!-- TAB 1: Overview -->
+    <div id="tab-overview" class="tab-content active">
+        <div class="two-col">
+        <!-- Main Panel -->
+        <div>
+            <h2 class="section-title">This Month's Cash Flow</h2>
+            <div class="card" style="display: flex; justify-content: space-around; text-align: center;">
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--fin-text-muted); margin-bottom: 0.5rem;">Income</div>
+                    <div style="font-size: 1.5rem; font-weight: 600; color: var(--fin-success);" id="cf-income">₹--</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--fin-text-muted); margin-bottom: 0.5rem;">Expenses</div>
+                    <div style="font-size: 1.5rem; font-weight: 600; color: var(--fin-danger);" id="cf-expenses">₹--</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--fin-text-muted); margin-bottom: 0.5rem;">Debt Payments</div>
+                    <div style="font-size: 1.5rem; font-weight: 600; color: var(--fin-warning);" id="cf-debt">₹--</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Side Panel -->
+        <div>
+            <h2 class="section-title">Money Coach Insights</h2>
+            <div id="insights-panel">
+                <p style="color: var(--fin-text-muted);">Analyzing your finances...</p>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- TAB 2: Debts & Strategies -->
+    <div id="tab-debts" class="tab-content">
+        <div class="two-col">
+            <div>
+                <h2 class="section-title">Your Active Debts</h2>
+                <div class="data-list" id="debts-list">
+                    <div style="padding: 1.5rem; color: var(--fin-text-muted); text-align: center;">Loading debts...</div>
+                </div>
+            </div>
+            <div>
+                <h2 class="section-title">Debt Strategy Preview</h2>
+                <div class="card" id="strategy-panel">
+                    <p style="color: var(--fin-text-muted);">Loading strategies...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: Settings & Income -->
+    <div id="tab-settings" class="tab-content">
+        <div>
+            <h2 class="section-title">Income Sources</h2>
+            <div class="data-list" id="income-list">
+                <div style="padding: 1.5rem; color: var(--fin-text-muted); text-align: center;">Loading income sources...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction Modal -->
+<div class="modal-overlay" id="transactionModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add Transaction</h3>
+            <button class="btn-close" onclick="closeModal('transactionModal')">&times;</button>
+        </div>
+        <div class="form-group">
+            <label>Type</label>
+            <select id="tx-type" class="form-control">
+                <option value="EXPENSE">Expense</option>
+                <option value="INCOME">Income</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Amount (₹)</label>
+            <input type="number" id="tx-amount" class="form-control" placeholder="e.g. 500">
+        </div>
+        <div class="form-group">
+            <label>Date</label>
+            <input type="datetime-local" id="tx-date" class="form-control">
+        </div>
+        <button class="btn-action btn-primary" style="width: 100%; margin-top: 1rem;" onclick="submitTransaction()">Save Transaction</button>
+    </div>
+</div>
+
+<!-- Purchase Planner Modal -->
+<div class="modal-overlay" id="purchaseModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Can I Afford This?</h3>
+            <button class="btn-close" onclick="closeModal('purchaseModal')">&times;</button>
+        </div>
+        <div class="form-group">
+            <label>What do you want to buy?</label>
+            <input type="text" id="pur-name" class="form-control" placeholder="e.g. iPhone 15">
+        </div>
+        <div class="form-group">
+            <label>Price (₹)</label>
+            <input type="number" id="pur-amount" class="form-control" placeholder="e.g. 80000">
+        </div>
+        <button class="btn-action btn-primary" style="width: 100%; margin-top: 1rem;" onclick="checkAffordability()">Analyze Purchase</button>
+        
+        <div id="afford-result">
+            <h4 id="afford-status" style="margin: 0 0 0.5rem 0;"></h4>
+            <p id="afford-reason" style="margin: 0; font-size: 0.9rem;"></p>
+        </div>
+    </div>
+</div>
+
+<!-- Salary / Income Source Modal -->
+<div class="modal-overlay" id="salaryModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add/Edit Recurring Income</h3>
+            <button class="btn-close" onclick="closeModal('salaryModal')">&times;</button>
+        </div>
+        <input type="hidden" id="edit-inc-id" value="">
+        <div class="form-group">
+            <label>Source Name</label>
+            <input type="text" id="inc-name" class="form-control" placeholder="e.g. Google Salary" value="Salary">
+        </div>
+        <div class="form-group">
+            <label>Monthly Amount (₹)</label>
+            <input type="number" id="inc-amount" class="form-control" placeholder="e.g. 80000">
+        </div>
+        <div class="form-group">
+            <label>Expected Credit Date</label>
+            <input type="number" id="inc-date" class="form-control" placeholder="Day of month (1-31)" min="1" max="31">
+        </div>
+        <button class="btn-action btn-primary" style="width: 100%; margin-top: 1rem;" onclick="submitIncomeSource()">Save Income Source</button>
+    </div>
+</div>
+
+<!-- Debt Modal -->
+<div class="modal-overlay" id="debtModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add/Edit Debt</h3>
+            <button class="btn-close" onclick="closeModal('debtModal')">&times;</button>
+        </div>
+        <input type="hidden" id="edit-debt-id" value="">
+        <div class="form-group">
+            <label>Name / Purpose</label>
+            <input type="text" id="debt-name" class="form-control" placeholder="e.g. Personal Loan">
+        </div>
+        <div class="form-group">
+            <label>Amount (₹)</label>
+            <input type="number" id="debt-amount" class="form-control" placeholder="e.g. 50000">
+        </div>
+        <div class="form-group">
+            <label>Interest Rate (per month %)</label>
+            <input type="number" id="debt-rate" class="form-control" placeholder="e.g. 2" value="0">
+        </div>
+        <div class="form-group">
+            <label>Borrowing Date</label>
+            <input type="date" id="debt-date" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Return Date (Due Date)</label>
+            <input type="date" id="debt-due" class="form-control">
+        </div>
+        <button class="btn-action btn-primary" style="width: 100%; margin-top: 1rem;" onclick="submitDebt()">Save Debt</button>
+    </div>
+</div>
+
+{% csrf_token %}
+
+<script>
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const formatCurrency = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
+
+    function switchTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchSummary();
+        fetchStrategies();
+        fetchInsights();
+    });
+
+    async function fetchSummary() {
+        try {
+            const res = await fetch('/money/api/dashboard/summary/');
+            const data = await res.json();
+            
+            document.getElementById('dashboard-date').textContent = `Financial Snapshot for ${data.month}`;
+            
+            document.getElementById('stat-net-worth').textContent = formatCurrency(data.net_worth.net_worth);
+            document.getElementById('stat-assets').textContent = formatCurrency(data.net_worth.assets);
+            document.getElementById('stat-liabilities').textContent = formatCurrency(data.net_worth.liabilities);
+            
+            const surplus = data.cash_flow.surplus;
+            const surEl = document.getElementById('stat-surplus');
+            surEl.textContent = formatCurrency(surplus);
+            if (surplus > 0) surEl.classList.add('val-positive');
+            else if (surplus < 0) surEl.classList.add('val-negative');
+
+            document.getElementById('cf-income').textContent = formatCurrency(data.cash_flow.income);
+            document.getElementById('cf-expenses').textContent = formatCurrency(data.cash_flow.expenses);
+            document.getElementById('cf-debt').textContent = formatCurrency(data.cash_flow.debt_payments);
+
+            // Render Debts
+            renderDebts(data.debts);
+            
+            // Render Income Sources
+            renderIncomeSources(data.income_sources);
+        } catch (e) {
+            console.error("Failed to fetch summary", e);
+        }
+    }
+    
+    function renderDebts(debts) {
+        const container = document.getElementById('debts-list');
+        if(!debts || debts.length === 0) {
+            container.innerHTML = '<div style="padding: 1.5rem; color: #64748b; text-align: center;">You are debt-free! 🎉</div>';
+            return;
+        }
+        let html = '';
+        debts.forEach(d => {
+            html += `
+                <div class="data-item">
+                    <div>
+                        <div class="data-item-title">${d.name}</div>
+                        <div class="data-item-meta">Interest: ${d.interest_rate}% | Borrowed on: ${d.borrowing_date} | Due: ${d.due_date || 'N/A'}</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--fin-danger);">
+                            ${formatCurrency(d.outstanding_principal)}
+                        </div>
+                        <button class="btn-action btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem;" onclick="editDebt(${d.id}, '${d.name}', ${d.outstanding_principal}, ${d.interest_rate}, '${d.borrowing_date}', '${d.due_date || ''}')">Edit</button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function renderIncomeSources(sources) {
+        const container = document.getElementById('income-list');
+        if(!sources || sources.length === 0) {
+            container.innerHTML = '<div style="padding: 1.5rem; color: #64748b; text-align: center;">No fixed income sources added.</div>';
+            return;
+        }
+        let html = '';
+        sources.forEach(s => {
+            html += `
+                <div class="data-item">
+                    <div>
+                        <div class="data-item-title">${s.name}</div>
+                        <div class="data-item-meta">Expected on day ${s.expected_date} of every month</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--fin-success);">
+                            ${formatCurrency(s.amount)}
+                        </div>
+                        <button class="btn-action btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem;" onclick="editIncome(${s.id}, '${s.name}', ${s.amount}, ${s.expected_date})">Edit</button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    async function fetchStrategies() {
+        try {
+            const res = await fetch('/money/api/strategies/compare/');
+            const data = await res.json();
+            
+            let html = `
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
+                    <strong>Strategy</strong>
+                    <strong>Estimated Duration</strong>
+                </div>
+            `;
+            
+            html += `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center;">
+                    <span><strong>Debt Snowball</strong> <br><small style="color: var(--fin-text-muted)">Target: Pay off <strong>${data.snowball.target_name}</strong> first</small></span>
+                    <span style="font-weight: 600; color: var(--fin-primary);">~${data.snowball.estimated_months} Months</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center;">
+                    <span><strong>Debt Avalanche</strong> <br><small style="color: var(--fin-text-muted)">Target: Pay off <strong>${data.avalanche.target_name}</strong> first</small></span>
+                    <span style="font-weight: 600; color: var(--fin-primary);">~${data.avalanche.estimated_months} Months</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span><strong>Cash Flow Focus</strong> <br><small style="color: var(--fin-text-muted)">Target: Pay off <strong>${data.cash_flow.target_name}</strong> first</small></span>
+                    <span style="font-weight: 600; color: var(--fin-primary);">~${data.cash_flow.estimated_months} Months</span>
+                </div>
+            `;
+            
+            document.getElementById('strategy-panel').innerHTML = html;
+        } catch (e) {
+            console.error("Failed to fetch strategies", e);
+        }
+    }
+
+    async function fetchInsights() {
+        try {
+            const res = await fetch('/money/api/insights/recommendations/');
+            const data = await res.json();
+            
+            let html = '';
+            
+            // Render deterministic rules
+            if (data.rules && data.rules.length > 0) {
+                data.rules.forEach(rule => {
+                    let cls = 'insight-med';
+                    let icon = '⚠️';
+                    if (rule.severity === 'HIGH' || rule.severity === 'CRITICAL') {
+                        cls = 'insight-high';
+                        icon = '🚨';
+                    }
+                    html += `
+                        <div class="insight-item ${cls}">
+                            <div class="insight-icon">${icon}</div>
+                            <div class="insight-content">
+                                <h4>${rule.title}</h4>
+                                <p>${rule.explanation}</p>
+                                <p style="margin-top: 0.5rem; font-weight: 500; font-size: 0.85rem;">💡 ${rule.suggested_action}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            // Render AI
+            if (data.ai && data.ai.length > 0) {
+                data.ai.forEach(ai => {
+                    html += `
+                        <div class="insight-item insight-ai">
+                            <div class="insight-icon">✨</div>
+                            <div class="insight-content">
+                                <h4>AI Coach: ${ai.title}</h4>
+                                <p>${ai.reason}</p>
+                                <p style="margin-top: 0.5rem; font-weight: 500; font-size: 0.85rem;">🎯 ${ai.recommendation}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            if (html === '') {
+                html = `
+                <div class="insight-item insight-ai" style="background: #ecfdf5; border-left: 4px solid var(--fin-success);">
+                    <div class="insight-icon">✅</div>
+                    <div class="insight-content">
+                        <h4>All Clear!</h4>
+                        <p>No critical financial warnings detected. Your cash flow and buffers look stable.</p>
+                        <p style="margin-top: 0.5rem; font-weight: 500; font-size: 0.85rem;">💡 Continue following your debt strategy.</p>
+                    </div>
+                </div>`;
+            }
+            document.getElementById('insights-panel').innerHTML = html;
+        } catch (e) {
+            console.error("Failed to fetch insights", e);
+            document.getElementById('insights-panel').innerHTML = '<p style="color: var(--fin-danger);">Could not connect to Money Coach.</p>';
+        }
+    }
+
+    // Modal Handlers
+    function openModal(id) {
+        document.getElementById(id).classList.add('open');
+        if(id === 'transactionModal') document.getElementById('tx-date').value = new Date().toISOString().slice(0,16);
+        if(id === 'debtModal') {
+            document.getElementById('edit-debt-id').value = '';
+            document.getElementById('debt-name').value = '';
+            document.getElementById('debt-amount').value = '';
+            document.getElementById('debt-rate').value = '0';
+            document.getElementById('debt-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('debt-due').value = '';
+        }
+        if(id === 'salaryModal') {
+            document.getElementById('edit-inc-id').value = '';
+            document.getElementById('inc-name').value = 'Salary';
+            document.getElementById('inc-amount').value = '';
+            document.getElementById('inc-date').value = '';
+        }
+        if(id === 'purchaseModal') {
+            document.getElementById('pur-name').value = '';
+            document.getElementById('pur-amount').value = '';
+            document.getElementById('afford-result').style.display = 'none';
+        }
+    }
+    
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('open');
+    }
+
+    function editDebt(id, name, amount, rate, date, due) {
+        openModal('debtModal');
+        document.getElementById('edit-debt-id').value = id;
+        document.getElementById('debt-name').value = name;
+        document.getElementById('debt-amount').value = amount;
+        document.getElementById('debt-rate').value = rate;
+        document.getElementById('debt-date').value = date;
+        document.getElementById('debt-due').value = due;
+    }
+
+    function editIncome(id, name, amount, expected_date) {
+        openModal('salaryModal');
+        document.getElementById('edit-inc-id').value = id;
+        document.getElementById('inc-name').value = name;
+        document.getElementById('inc-amount').value = amount;
+        document.getElementById('inc-date').value = expected_date;
+    }
+
+    async function submitTransaction() {
+        const payload = {
+            transaction_type: document.getElementById('tx-type').value,
+            amount: document.getElementById('tx-amount').value,
+            date: document.getElementById('tx-date').value,
+            description: 'Manual entry'
+        };
+        
+        try {
+            const res = await fetch('/money/api/transactions/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify(payload)
+            });
+            if(res.ok) {
+                closeModal('transactionModal');
+                fetchSummary(); // Refresh dashboard
+                fetchInsights();
+                alert("Transaction added successfully!");
+            } else {
+                const data = await res.json();
+                alert("Error: " + JSON.stringify(data));
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    async function submitIncomeSource() {
+        const payload = {
+            name: document.getElementById('inc-name').value,
+            amount: document.getElementById('inc-amount').value,
+            expected_date: parseInt(document.getElementById('inc-date').value)
+        };
+        const editId = document.getElementById('edit-inc-id').value;
+        const url = editId ? `/money/api/income-sources/${editId}/` : '/money/api/income-sources/';
+        const method = editId ? 'PUT' : 'POST';
+        
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify(payload)
+            });
+            if(res.ok) {
+                closeModal('salaryModal');
+                fetchSummary(); 
+                alert(editId ? "Salary updated!" : "Salary added!");
+            } else {
+                const data = await res.json();
+                alert("Error: " + JSON.stringify(data));
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    async function submitDebt() {
+        const payload = {
+            name: document.getElementById('debt-name').value,
+            debt_type: 'I_OWE',
+            original_principal: document.getElementById('debt-amount').value,
+            outstanding_principal: document.getElementById('debt-amount').value,
+            interest_type: 'SIMPLE_MONTHLY',
+            interest_rate: document.getElementById('debt-rate').value,
+            borrowing_date: document.getElementById('debt-date').value,
+            due_date: document.getElementById('debt-due').value || null
+        };
+        const editId = document.getElementById('edit-debt-id').value;
+        const url = editId ? `/money/api/debts/${editId}/` : '/money/api/debts/';
+        const method = editId ? 'PUT' : 'POST';
+        
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify(payload)
+            });
+            if(res.ok) {
+                closeModal('debtModal');
+                fetchSummary(); 
+                fetchStrategies();
+                alert(editId ? "Debt updated!" : "Debt added!");
+            } else {
+                const data = await res.json();
+                alert("Error: " + JSON.stringify(data));
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    async function checkAffordability() {
+        const name = document.getElementById('pur-name').value;
+        const price = document.getElementById('pur-amount').value;
+        if(!name || !price) return alert('Please enter name and price');
+
+        const payload = {
+            name: name,
+            price: price
+        };
+        
+        try {
+            // 1. Save purchase
+            const res = await fetch('/money/api/purchases/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify(payload)
+            });
+            
+            if(res.ok) {
+                const purchase = await res.json();
+                // 2. Check Affordability
+                const affordRes = await fetch(`/money/api/purchases/${purchase.id}/afford/`);
+                const analysis = await affordRes.json();
+                
+                const resultBox = document.getElementById('afford-result');
+                const statusTxt = document.getElementById('afford-status');
+                const reasonTxt = document.getElementById('afford-reason');
+                
+                resultBox.style.display = 'block';
+                resultBox.className = ''; // reset
+                
+                statusTxt.textContent = analysis.status;
+                reasonTxt.textContent = analysis.reason;
+                
+                if (analysis.recommended_action === 'CASH') {
+                    resultBox.classList.add('afford-yes');
+                } else if (analysis.recommended_action === 'SAVE') {
+                    resultBox.classList.add('afford-plan');
+                } else {
+                    resultBox.classList.add('afford-no');
+                }
+            }
+        } catch(e) { console.error(e); }
+    }
+</script>
+{% endblock %}

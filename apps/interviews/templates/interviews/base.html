@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" class="antialiased h-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Interview Prep - LRV{% endblock %}</title>
+    
+    <!-- Tailwind CSS (CDN for MVP) -->
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#10b981',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Alpine.js, Marked.js, Mermaid.js & Quill.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true});</script>
+    <!-- Quill.js Editor -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
+    <!-- Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="h-full flex overflow-hidden">
+    
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col hidden md:flex">
+        <!-- Logo & Module Switcher -->
+        <div class="h-16 flex items-center px-4 border-b border-slate-200 dark:border-slate-700 justify-between">
+            <span class="font-bold text-lg">LRV Interviews</span>
+            <!-- Simple Module Switcher Dropdown (Alpine) -->
+            <div x-data="{ open: false }" class="relative">
+                <button @click="open = !open" class="text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-600 transition">
+                    Modules ▼
+                </button>
+                <div x-show="open" @click.away="open = false" class="absolute left-0 mt-2 w-40 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded shadow-lg z-50">
+                    <a href="/" class="block px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-600">📚 Book Brief</a>
+                    <a href="/interviews/" class="block px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-600 font-semibold">💼 Interviews</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation -->
+        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            <a href="{% url 'home' %}" class="block px-3 py-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition text-slate-500 font-medium mb-4">← Back to Main Home</a>
+            <a href="{% url 'interviews:dashboard' %}" class="block px-3 py-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition {% block nav_dashboard %}{% endblock %}">Dashboard</a>
+            <a href="{% url 'interviews:questions' %}" class="block px-3 py-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition {% block nav_questions %}{% endblock %}">Question Bank</a>
+            <a href="{% url 'interviews:experiences' %}" class="block px-3 py-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition {% block nav_experiences %}{% endblock %}">Experiences</a>
+            <a href="{% url 'interviews:notes' %}" class="block px-3 py-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition {% block nav_notes %}{% endblock %}">Notes</a>
+            <a href="{% url 'interviews:revisions' %}" class="block px-3 py-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition {% block nav_revisions %}{% endblock %}">Revision Queue</a>
+        </nav>
+        
+        <!-- User Section -->
+        <div class="p-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+            <span class="text-sm font-medium">{{ request.user.username|default:"Guest" }}</span>
+            <button onclick="document.documentElement.classList.toggle('dark')" class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition">
+                🌗
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50 dark:bg-slate-900">
+        <!-- Mobile Header (hidden on md) -->
+        <header class="md:hidden h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center px-4 justify-between">
+            <span class="font-bold text-lg">LRV Interviews</span>
+            <button onclick="document.documentElement.classList.toggle('dark')" class="text-xl">🌗</button>
+        </header>
+
+        <!-- Page Content -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-8">
+            {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                        <div class="p-3 rounded mb-2 text-sm
+                            {% if message.tags == 'error' %}bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-200
+                            {% elif message.tags == 'success' %}bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-200
+                            {% else %}bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            {% block content %}
+            {% endblock %}
+        </div>
+    </main>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

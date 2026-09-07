@@ -1,0 +1,70 @@
+{% extends "interviews/base.html" %}
+{% block title %}Question Bank - Interviews{% endblock %}
+{% block nav_questions %}bg-slate-200 dark:bg-slate-700{% endblock %}
+{% block content %}
+<div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
+    <div class="sm:flex sm:justify-between sm:items-center mb-8">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl md:text-3xl text-slate-800 dark:text-slate-100 font-bold">Question Bank ✨</h1>
+        </div>
+        <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
+            <a href="{% url 'interviews:question_add' %}" class="btn bg-indigo-500 hover:bg-indigo-600 text-white rounded px-4 py-2">
+                Add Question
+            </a>
+        </div>
+    </div>
+    <!-- List -->
+    <div class="bg-white dark:bg-slate-800 shadow-lg rounded-sm border border-slate-200 dark:border-slate-700">
+        <header class="px-5 py-4 border-b border-slate-100 dark:border-slate-700">
+            <h2 class="font-semibold text-slate-800 dark:text-slate-100">All Questions <span class="text-slate-400 dark:text-slate-500 font-medium">{{ page_obj.paginator.count }}</span></h2>
+        </header>
+        <div class="p-3">
+            <div class="overflow-x-auto">
+                <table class="table-auto w-full dark:text-slate-300">
+                    <thead class="text-xs uppercase text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-700 dark:bg-opacity-50 rounded-sm">
+                        <tr>
+                            <th class="p-2 whitespace-nowrap"><div class="font-semibold text-left">Title</div></th>
+                            <th class="p-2 whitespace-nowrap"><div class="font-semibold text-left">Type</div></th>
+                            <th class="p-2 whitespace-nowrap"><div class="font-semibold text-left">Difficulty</div></th>
+                            <th class="p-2 whitespace-nowrap"><div class="font-semibold text-left">Status</div></th>
+                            <th class="p-2 whitespace-nowrap"><div class="font-semibold text-center">Actions</div></th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm divide-y divide-slate-100 dark:divide-slate-700">
+                        {% for q in questions %}
+                        <tr>
+                            <td class="p-2 whitespace-nowrap">
+                                <a href="{% url 'interviews:question_detail' q.pk %}" class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+                                    {{ q.title }}
+                                </a>
+                            </td>
+                            <td class="p-2 whitespace-nowrap"><div class="text-left">{{ q.get_question_type_display }}</div></td>
+                            <td class="p-2 whitespace-nowrap">
+                                <div class="text-left font-medium {% if q.difficulty == 'easy' %}text-emerald-500{% elif q.difficulty == 'medium' %}text-amber-500{% else %}text-rose-500{% endif %}">
+                                    {{ q.get_difficulty_display }}
+                                </div>
+                            </td>
+                            <td class="p-2 whitespace-nowrap">
+                                <div class="text-left">
+                                    <span class="text-xs inline-flex font-medium bg-indigo-100 text-indigo-600 rounded-full text-center px-2.5 py-0.5">{{ q.get_status_display }}</span>
+                                </div>
+                            </td>
+                            <td class="p-2 whitespace-nowrap">
+                                <div class="text-center space-x-2">
+                                    <a href="{% url 'interviews:question_detail' q.pk %}" class="text-indigo-500 hover:text-indigo-600 font-medium text-sm">Read</a>
+                                    <a href="{% url 'interviews:question_edit' q.pk %}" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 font-medium text-sm">Edit</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="p-4 text-center text-slate-500">No questions found. Add your first question!</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

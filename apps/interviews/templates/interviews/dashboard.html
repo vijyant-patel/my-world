@@ -1,0 +1,91 @@
+{% extends "interviews/base.html" %}
+
+{% block title %}Dashboard - LRV Interviews{% endblock %}
+{% block nav_dashboard %}bg-slate-100 dark:bg-slate-700 font-semibold{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="mb-8 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight">Welcome back, {{ request.user.username }}!</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Here's your interview preparation overview.</p>
+        </div>
+        <div>
+            <a href="{% url 'interviews:question_add' %}" class="bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium transition shadow-sm">
+                + Add Question
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <!-- Stat Card 1 -->
+        <div class="bg-white dark:bg-slate-800 p-5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
+            <h3 class="text-sm font-medium text-slate-500 dark:text-slate-400">Total Interviews</h3>
+            <p class="text-3xl font-bold mt-2">{{ total_interviews }}</p>
+        </div>
+        <!-- Stat Card 2 -->
+        <div class="bg-white dark:bg-slate-800 p-5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
+            <h3 class="text-sm font-medium text-slate-500 dark:text-slate-400">Saved Questions</h3>
+            <p class="text-3xl font-bold mt-2">{{ total_questions }}</p>
+        </div>
+        <!-- Stat Card 3 -->
+        <div class="bg-white dark:bg-slate-800 p-5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm border-l-4 border-l-secondary">
+            <h3 class="text-sm font-medium text-slate-500 dark:text-slate-400">Pending Revisions</h3>
+            <p class="text-3xl font-bold mt-2 text-secondary">{{ revisions_pending }}</p>
+        </div>
+        <!-- Stat Card 4 -->
+        <div class="bg-white dark:bg-slate-800 p-5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
+            <h3 class="text-sm font-medium text-slate-500 dark:text-slate-400">Mastered Concepts</h3>
+            <p class="text-3xl font-bold mt-2">{{ mastered_questions }}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Recent Questions -->
+        <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                <h3 class="font-semibold text-slate-800 dark:text-slate-200">Recently Added Questions</h3>
+                <a href="{% url 'interviews:questions' %}" class="text-xs text-primary hover:underline">View All</a>
+            </div>
+            <div class="divide-y divide-slate-200 dark:divide-slate-700">
+                {% for question in recent_questions %}
+                <a href="{% url 'interviews:question_detail' question.pk %}" class="px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition flex justify-between items-center cursor-pointer block">
+                    <div>
+                        <h4 class="font-medium text-sm text-slate-900 dark:text-slate-100">{{ question.title }}</h4>
+                        <div class="flex items-center space-x-2 mt-1">
+                            <span class="text-xs text-slate-500 dark:text-slate-400">{{ question.get_difficulty_display }}</span>
+                            <span class="text-xs text-slate-500 dark:text-slate-400">&bull;</span>
+                            <span class="text-xs text-slate-500 dark:text-slate-400">{{ question.get_status_display }}</span>
+                        </div>
+                    </div>
+                    <span class="text-slate-400">→</span>
+                </a>
+                {% empty %}
+                <div class="px-5 py-8 text-center text-slate-500 dark:text-slate-400 text-sm">
+                    No questions added yet. Start building your knowledge base!
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-700">
+                <h3 class="font-semibold text-slate-800 dark:text-slate-200">Quick Actions</h3>
+            </div>
+            <div class="p-5 space-y-3">
+                <a href="{% url 'interviews:revisions' %}" class="w-full flex items-center justify-center space-x-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 px-4 py-2 rounded-md text-sm font-medium transition">
+                    <span>📝 Start Revision Queue</span>
+                </a>
+                <a href="{% url 'interviews:experiences' %}" class="w-full flex items-center justify-center space-x-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 px-4 py-2 rounded-md text-sm font-medium transition">
+                    <span>➕ Log Interview</span>
+                </a>
+                <a href="{% url 'interviews:questions' %}" class="w-full flex items-center justify-center space-x-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 px-4 py-2 rounded-md text-sm font-medium transition">
+                    <span>📋 Browse Categories</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "bookbrief/bookbrief_base.html" %}
+{% block title %}Books – BookBrief{% endblock %}
+{% block meta_description %}<meta name="description" content="Browse book summaries. Find books by title, author, or category.">{% endblock %}
+{% block bookbrief_content %}
+{% url 'book_add' as book_add_url %}
+<h1 class="page-title">Books</h1>
+{% if user.is_authenticated %}<p class="page-actions">{% include "bookbrief/components/_button.html" with href=book_add_url label="Add book" variant="primary" %}</p>{% endif %}
+{% include "bookbrief/components/_search_box.html" with action=request.path name="search" value=request.GET.search placeholder="Search books or authors…" categories=categories %}
+<section class="book-list">
+    {% if books %}
+        <div class="cards">
+            {% for book in books %}
+                {% include "bookbrief/components/_book_card.html" with book=book %}
+            {% endfor %}
+        </div>
+        {% include "bookbrief/components/_pagination.html" with page_obj=page_obj %}
+    {% else %}
+        <p class="empty-state">No books found.{% if not user.is_authenticated %} Log in to add a book.{% endif %}</p>
+    {% endif %}
+</section>
+{% endblock %}

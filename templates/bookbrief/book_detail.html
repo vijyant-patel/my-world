@@ -1,0 +1,68 @@
+{% extends "bookbrief/bookbrief_base.html" %}
+{% block title %}{{ book.title }} – BookBrief{% endblock %}
+{% block meta_description %}<meta name="description" content="{{ book.title }} by {{ book.author }}. {{ book.summaries.count }} summar{{ book.summaries.count|pluralize:"y,ies" }}.">{% endblock %}
+{% block body_class %}layout-reader{% endblock %}
+{% block container_class %}container--narrow{% endblock %}
+{% block bookbrief_content %}
+<article class="book-detail" itemscope itemtype="https://schema.org/Book">
+    {% if book.cover_image %}
+        <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="book-cover">
+    {% endif %}
+    <div class="book-meta">
+        <h1>{{ book.title }}</h1>
+        <p class="author">by {{ book.author }}{% if book.category %} · <a href="{% url 'category_detail' book.category.slug %}">{{ book.category.name }}</a>{% endif %}</p>
+        {% if book.average_rating %}
+            <p class="rating">★ {{ book.average_rating }} ({{ book.reviews_count }} review{{ book.reviews_count|pluralize }})</p>
+        {% endif %}
+        {% if user.is_authenticated and book.added_by_id == user.id %}
+            <p class="book-detail__actions">
+                <a href="{% url 'summary_add' %}?book={{ book.pk }}" class="btn btn--primary">Add summary</a>
+                <a href="{% url 'book_edit' book.slug %}" class="btn btn--secondary">Edit book</a>
+                <a href="{% url 'book_delete' book.slug %}" class="btn btn--danger">Delete book</a>
+            </p>
+        {% endif %}
+    </div>
+
+    <section class="summaries">
+        <h2>Summaries</h2>
+        {% if summaries %}
+            {% for summary in summaries %}
+                {% include "bookbrief/components/_summary_card.html" with summary=summary %}
+            {% endfor %}
+        {% else %}
+            <p class="empty-state">No summaries yet.{% if user.is_authenticated %} <a href="{% url 'summary_add' %}?book={{ book.pk }}" class="btn btn--primary">Add one</a>{% endif %}</p>
+        {% endif %}
+    </section>
+
+    <section class="reviews">
+        <h2>Reviews</h2>
+        {% if user_review %}
+            <p>Your review: {{ user_review.rating }}/5 — {{ user_review.body|truncatewords:30 }}</p>
+        {% endif %}
+        {% for review in reviews %}
+            <div class="review">
+                <p class="review-meta">{{ review.user.username }} · {{ review.rating }}/5 · {{ review.created_at|date }}</p>
+                {% if review.body %}<p>{{ review.body|linebreaks }}</p>{% endif %}
+            </div>
+        {% empty %}
+            <p class="empty-state">No reviews yet.</p>
+        {% endfor %}
+        {% if user.is_authenticated and review_form %}
+            <div class="form-wrap form-wrap--inline">
+                <h3 class="form-wrap__title">{% if user_review %}Update your review{% else %}Leave a review{% endif %}</h3>
+                <form method="post" action="" class="form form--light form--review">
+                    {% csrf_token %}
+                    {% for field in review_form %}
+                        {% include "bookbrief/components/_form_field.html" with field=field %}
+                    {% endfor %}
+                    <p class="form-actions">
+                        <button type="submit" class="btn btn--primary">{% if user_review %}Update{% else %}Submit{% endif %} review</button>
+                    </p>
+                </form>
+            </div>
+        {% elif not user.is_authenticated %}
+            <p><a href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" class="btn btn--secondary">Log in to leave a review</a></p>
+        {% endif %}
+    </section>
+</article>
+{% endblock %}

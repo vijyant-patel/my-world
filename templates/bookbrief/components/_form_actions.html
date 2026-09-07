@@ -1,0 +1,7 @@
+{# Submit + optional cancel. Pass: submit_label (string), cancel_url (optional), cancel_label (optional) #}
+<p class="form-actions">
+    <button type="submit" class="btn btn--primary">{{ submit_label }}</button>
+    {% if cancel_url %}
+        <a href="{{ cancel_url }}" class="btn btn--secondary">Cancel</a>
+    {% endif %}
+</p>

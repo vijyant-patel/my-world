@@ -1,0 +1,22 @@
+{% extends "bookbrief/bookbrief_base.html" %}
+{% block title %}{{ category.name }} – BookBrief{% endblock %}
+{% block meta_description %}<meta name="description" content="Books in {{ category.name }}.">{% endblock %}
+{% block bookbrief_content %}
+<h1 class="page-title">{{ category.name }}</h1>
+{% if page_obj %}
+    <div class="cards">
+        {% for book in page_obj %}
+            {% include "bookbrief/components/_book_card.html" with book=book %}
+        {% endfor %}
+    </div>
+    {% include "bookbrief/components/_pagination.html" with page_obj=page_obj %}
+{% elif books %}
+    <div class="cards">
+        {% for book in books %}
+            {% include "bookbrief/components/_book_card.html" with book=book %}
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty-state">No books in this category.</p>
+{% endif %}
+{% endblock %}

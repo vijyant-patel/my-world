@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Login – BookBrief{% endblock %}
+{% block content %}
+<div class="form-wrap form-wrap--auth">
+    <h1 class="form-wrap__title">Log in</h1>
+    <form method="post" action="{% url 'login' %}" class="form form--light">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        {% for field in form %}
+            {% include "bookbrief/components/_form_field.html" with field=field %}
+        {% endfor %}
+        <p class="form-actions">
+            <button type="submit" class="btn btn--primary">Log in</button>
+        </p>
+    </form>
+    <p class="form-wrap__footer">
+        <a href="{% url 'password_reset' %}" class="form-wrap__link">Forgot your password?</a><br>
+        <a href="{% url 'register' %}" class="form-wrap__link">Create an account</a>
+    </p>
+</div>
+{% endblock %}

@@ -1,0 +1,658 @@
+{% extends "base.html" %}
+
+{% block title %}My Todos | LRV{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Premium SaaS Aesthetics */
+    :root {
+        --bg-app: #fcfcfd;
+        --bg-sidebar: #f3f4f6;
+        --border-color: #e5e7eb;
+        --text-main: #111827;
+        --text-muted: #6b7280;
+        --primary: #2563eb;
+        --primary-hover: #1d4ed8;
+        --success: #10b981;
+        --surface: #ffffff;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    body {
+        background-color: var(--bg-app);
+    }
+
+    .todo-layout {
+        display: flex;
+        min-height: calc(100vh - 80px); /* Assuming header is ~80px */
+        margin: -2rem; /* Negate container padding if necessary, or just rely on flex */
+    }
+
+    /* Sidebar */
+    .todo-sidebar {
+        width: 260px;
+        background-color: var(--bg-sidebar);
+        border-right: 1px solid var(--border-color);
+        padding: 2rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .nav-section h3 {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+    }
+
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        color: var(--text-main);
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s;
+    }
+
+    .nav-item:hover, .nav-item.active {
+        background-color: #e5e7eb;
+    }
+
+    /* Main Content */
+    .todo-main {
+        flex: 1;
+        padding: 3rem 4rem;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .todo-header {
+        margin-bottom: 2rem;
+    }
+
+    .todo-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin: 0 0 0.25rem 0;
+    }
+
+    .todo-header p {
+        color: var(--text-muted);
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    /* Quick Add Composer */
+    .quick-add-container {
+        margin-bottom: 2.5rem;
+        position: relative;
+    }
+
+    .quick-add-input {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        padding-left: 3rem;
+        font-size: 1.05rem;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        background: var(--surface);
+        box-shadow: var(--shadow-sm);
+        transition: all 0.2s;
+        box-sizing: border-box;
+    }
+
+    .quick-add-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .quick-add-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 1.25rem;
+        pointer-events: none;
+    }
+
+    /* Todo List */
+    .todo-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .todo-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.875rem 1rem;
+        background: var(--surface);
+        border: 1px solid transparent;
+        border-bottom: 1px solid var(--border-color);
+        border-radius: 8px;
+        transition: all 0.2s;
+        group: hover;
+    }
+
+    .todo-item:hover {
+        border-color: var(--border-color);
+        box-shadow: var(--shadow-sm);
+        transform: translateY(-1px);
+    }
+
+    .todo-item.completed .todo-title {
+        text-decoration: line-through;
+        color: var(--text-muted);
+    }
+
+    /* Custom Checkbox */
+    .custom-checkbox {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid #d1d5db;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        flex-shrink: 0;
+    }
+
+    .custom-checkbox:hover {
+        border-color: var(--primary);
+        background: #eff6ff;
+    }
+
+    .todo-item.completed .custom-checkbox {
+        background: var(--success);
+        border-color: var(--success);
+    }
+
+    .custom-checkbox svg {
+        width: 14px;
+        height: 14px;
+        color: white;
+        opacity: 0;
+        transform: scale(0.5);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .todo-item.completed .custom-checkbox svg {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .todo-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        cursor: pointer;
+    }
+
+    .todo-title {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--text-main);
+        transition: color 0.2s;
+    }
+
+    .todo-meta {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 0.25rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-muted);
+    }
+
+    .empty-state h3 {
+        font-size: 1.25rem;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+    }
+
+    /* Drawer */
+    .drawer-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.4);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s;
+        z-index: 40;
+    }
+
+    .drawer {
+        position: fixed;
+        top: 0; right: -400px; bottom: 0;
+        width: 400px;
+        background: var(--surface);
+        box-shadow: -4px 0 15px rgba(0,0,0,0.1);
+        transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 50;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .drawer.open {
+        right: 0;
+    }
+    
+    .drawer-overlay.open {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .drawer-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .drawer-body {
+        padding: 1.5rem;
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-danger { background: #fee2e2; color: #ef4444; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .todo-layout { flex-direction: column; }
+        .todo-sidebar { width: 100%; padding: 1rem; border-right: none; border-bottom: 1px solid var(--border-color); flex-direction: row; overflow-x: auto;}
+        .todo-main { padding: 1.5rem; }
+        .drawer { width: 100%; right: -100%; }
+    }
+</style>
+{% endblock %}
+
+{% block container_class %}full-width{% endblock %}
+
+{% block content %}
+<div class="todo-layout">
+    <!-- Sidebar -->
+    <aside class="todo-sidebar">
+        <div class="nav-section">
+            <h3>Views</h3>
+            <div class="nav-item active" onclick="setView('today')">
+                <span>📅</span> Today
+            </div>
+            <div class="nav-item" onclick="setView('upcoming')">
+                <span>🗓️</span> Upcoming
+            </div>
+            <div class="nav-item" onclick="setView('all')">
+                <span>📥</span> All Todos
+            </div>
+            <div class="nav-item" onclick="setView('completed')">
+                <span>✅</span> Completed
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <h3>My Lists</h3>
+            <div id="lists-container">
+                {% for list in todo_lists %}
+                <div class="nav-item">
+                    <span>{{ list.icon|default:"📁" }}</span> {{ list.name }}
+                </div>
+                {% empty %}
+                <div style="font-size: 0.85rem; color: #9ca3af; padding-left: 0.5rem;">No lists yet.</div>
+                {% endfor %}
+            </div>
+            <div class="nav-item" style="color: var(--text-muted); margin-top: 0.5rem;" onclick="promptNewList()">
+                <span>+</span> Add List
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="todo-main">
+        <header class="todo-header">
+            <h1 id="view-title">Today</h1>
+            <p id="view-subtitle">Stay on top of the little things.</p>
+        </header>
+
+        <div class="quick-add-container">
+            <span class="quick-add-icon">+</span>
+            <input type="text" id="quick-add-input" class="quick-add-input" placeholder="Add a todo... (Press Enter to save)">
+        </div>
+
+        <div id="todo-list" class="todo-list">
+            <!-- Todos rendered via JS -->
+            <div class="empty-state">
+                <div style="font-size: 2.5rem; margin-bottom: 1rem;">✨</div>
+                <h3>Loading your todos...</h3>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Details Drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+    <div class="drawer-header">
+        <h3 style="margin:0; font-size: 1.1rem;">Edit Todo</h3>
+        <button onclick="closeDrawer()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color: #6b7280;">&times;</button>
+    </div>
+    <div class="drawer-body">
+        <input type="hidden" id="edit-id">
+        <div class="form-group">
+            <label>Title</label>
+            <input type="text" id="edit-title" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Notes</label>
+            <textarea id="edit-notes" class="form-control" rows="4" placeholder="Add some details..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>Priority</label>
+            <select id="edit-priority" class="form-control">
+                <option value="NONE">None</option>
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Due Date</label>
+            <input type="date" id="edit-due-date" class="form-control">
+        </div>
+        <div style="display: flex; gap: 1rem; margin-top: auto;">
+            <button class="btn btn-primary" style="flex: 1;" onclick="saveTodoDetails()">Save Changes</button>
+            <button class="btn btn-danger" onclick="deleteTodo()">Delete</button>
+        </div>
+    </div>
+</div>
+
+{% csrf_token %}
+
+<script>
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    let allTodos = [];
+    let currentView = 'today';
+
+    // Fetch todos on load
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchTodos();
+        
+        // Quick add event listener
+        document.getElementById('quick-add-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter' && this.value.trim() !== '') {
+                createTodo(this.value.trim());
+                this.value = '';
+            }
+        });
+    });
+
+    async function fetchTodos() {
+        try {
+            const res = await fetch('/todos/api/todos/');
+            const data = await res.json();
+            allTodos = data.todos;
+            renderTodos();
+        } catch (e) {
+            console.error("Failed to fetch todos", e);
+        }
+    }
+
+    async function createTodo(title) {
+        // Optimistic UI could go here
+        try {
+            const res = await fetch('/todos/api/todos/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ title: title })
+            });
+            if(res.ok) {
+                fetchTodos(); // Refresh list to get real ID and dates
+            }
+        } catch (e) {
+            console.error("Failed to create todo", e);
+        }
+    }
+
+    async function toggleTodo(id, currentStatus) {
+        const todo = allTodos.find(t => t.id === id);
+        if(todo) todo.is_completed = !currentStatus;
+        renderTodos(); // Optimistic update
+
+        try {
+            await fetch(`/todos/api/todos/${id}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ is_completed: !currentStatus })
+            });
+        } catch (e) {
+            console.error("Failed to toggle", e);
+            // Revert on fail
+            if(todo) todo.is_completed = currentStatus;
+            renderTodos();
+        }
+    }
+
+    function renderTodos() {
+        const container = document.getElementById('todo-list');
+        container.innerHTML = '';
+        
+        // Filter based on view
+        let filtered = allTodos;
+        const todayStr = new Date().toISOString().split('T')[0];
+        
+        if (currentView === 'today') {
+            filtered = allTodos.filter(t => !t.is_completed && (!t.due_date || t.due_date <= todayStr));
+            document.getElementById('view-title').textContent = "Today";
+            document.getElementById('view-subtitle').textContent = "Stay on top of the little things.";
+        } else if (currentView === 'upcoming') {
+            filtered = allTodos.filter(t => !t.is_completed && t.due_date && t.due_date > todayStr);
+            document.getElementById('view-title').textContent = "Upcoming";
+            document.getElementById('view-subtitle').textContent = "Your future self is looking good.";
+        } else if (currentView === 'completed') {
+            filtered = allTodos.filter(t => t.is_completed);
+            document.getElementById('view-title').textContent = "Completed";
+            document.getElementById('view-subtitle').textContent = "Look at all you've accomplished.";
+        } else {
+            filtered = allTodos.filter(t => !t.is_completed);
+            document.getElementById('view-title').textContent = "All Todos";
+            document.getElementById('view-subtitle').textContent = "Everything on your plate.";
+        }
+
+        if (filtered.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">✨</div>
+                    <h3>You're all caught up.</h3>
+                    <p>Nothing waiting for you here.</p>
+                </div>
+            `;
+            return;
+        }
+
+        filtered.forEach(todo => {
+            const el = document.createElement('div');
+            el.className = `todo-item ${todo.is_completed ? 'completed' : ''}`;
+            
+            // Priority colors
+            let prioColor = '';
+            if (todo.priority === 'HIGH') prioColor = 'color: #ef4444; font-weight: 600;';
+            if (todo.priority === 'MEDIUM') prioColor = 'color: #f59e0b; font-weight: 600;';
+            
+            let metaHtml = '';
+            if (todo.priority !== 'NONE') {
+                metaHtml += `<span style="${prioColor}">! ${todo.priority}</span>`;
+            }
+            if (todo.due_date) {
+                metaHtml += `<span>🗓️ ${todo.due_date}</span>`;
+            }
+            
+            el.innerHTML = `
+                <div class="custom-checkbox" onclick="toggleTodo(${todo.id}, ${todo.is_completed})">
+                    <svg viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="todo-content" onclick="openDrawer(${todo.id})">
+                    <div class="todo-title">${todo.title}</div>
+                    ${metaHtml ? `<div class="todo-meta">${metaHtml}</div>` : ''}
+                </div>
+            `;
+            container.appendChild(el);
+        });
+    }
+
+    function setView(viewName) {
+        currentView = viewName;
+        document.querySelectorAll('.nav-section .nav-item').forEach(el => el.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        renderTodos();
+    }
+
+    // Drawer Logic
+    function openDrawer(id) {
+        const todo = allTodos.find(t => t.id === id);
+        if(!todo) return;
+        
+        document.getElementById('edit-id').value = todo.id;
+        document.getElementById('edit-title').value = todo.title;
+        document.getElementById('edit-notes').value = todo.notes || '';
+        document.getElementById('edit-priority').value = todo.priority;
+        document.getElementById('edit-due-date').value = todo.due_date || '';
+        
+        document.getElementById('drawer').classList.add('open');
+        document.getElementById('drawer-overlay').classList.add('open');
+    }
+
+    function closeDrawer() {
+        document.getElementById('drawer').classList.remove('open');
+        document.getElementById('drawer-overlay').classList.remove('open');
+    }
+
+    async function saveTodoDetails() {
+        const id = document.getElementById('edit-id').value;
+        const data = {
+            title: document.getElementById('edit-title').value,
+            notes: document.getElementById('edit-notes').value,
+            priority: document.getElementById('edit-priority').value,
+            due_date: document.getElementById('edit-due-date').value || null
+        };
+
+        try {
+            const res = await fetch(`/todos/api/todos/${id}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(data)
+            });
+            if(res.ok) {
+                closeDrawer();
+                fetchTodos();
+            }
+        } catch (e) {
+            console.error("Failed to save", e);
+        }
+    }
+
+    async function deleteTodo() {
+        if(!confirm("Delete this todo?")) return;
+        const id = document.getElementById('edit-id').value;
+        try {
+            const res = await fetch(`/todos/api/todos/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                }
+            });
+            if(res.ok) {
+                closeDrawer();
+                fetchTodos();
+            }
+        } catch (e) {
+            console.error("Failed to delete", e);
+        }
+    }
+    
+    async function promptNewList() {
+        const name = prompt("Enter list name:");
+        if(!name) return;
+        
+        try {
+            const res = await fetch('/todos/api/lists/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ name: name })
+            });
+            if(res.ok) {
+                window.location.reload(); // Simple reload for list sidebar update for now
+            }
+        } catch (e) {
+            console.error("Failed to create list", e);
+        }
+    }
+</script>
+{% endblock %}

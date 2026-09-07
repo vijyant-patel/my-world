@@ -1,0 +1,29 @@
+{# Load Quill and init editor. Include in extra_js. Pass: field_id (e.g. id_content) #}
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js" crossorigin="anonymous"></script>
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+<script>
+(function() {
+    var fieldId = "{{ field_id }}";
+    var source = document.getElementById(fieldId);
+    if (!source) return;
+    var container = document.getElementById("quill-" + fieldId);
+    if (!container) return;
+    var editor = new Quill(container, {
+        theme: "snow",
+        placeholder: "Write your summary. Use headings and bullet lists for structure.",
+        modules: {
+            toolbar: [
+                [{ header: [1, 2, 3, false] }],
+                ["bold", "italic", "underline"],
+                [{ list: "ordered" }, { list: "bullet" }],
+                ["link", "code-block"],
+                ["clean"]
+            ]
+        }
+    });
+    if (source.value) editor.root.innerHTML = source.value;
+    editor.on("text-change", function() {
+        source.value = editor.root.innerHTML;
+    });
+})();
+</script>

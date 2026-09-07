@@ -1,0 +1,6 @@
+{# Rich text editor wrapper for summary content. Pass: field, field_id (e.g. id_content), field_name (e.g. content) #}
+<div class="rich-editor" data-field-id="{{ field_id }}" data-field-name="{{ field_name }}">
+    <div id="quill-{{ field_id }}" class="rich-editor__container" role="textbox" aria-label="Summary content" aria-describedby="rich-editor-hint-{{ field_id }}"></div>
+    <textarea name="{{ field_name }}" id="{{ field_id }}" class="rich-editor__source" style="display:none;" {% if field.field.required %}required{% endif %}>{{ field.value|default:'' }}</textarea>
+</div>
+<p id="rich-editor-hint-{{ field_id }}" class="rich-editor__hint">Use the toolbar for bold, italic, lists, headings, and links. Shortcuts: Ctrl+B bold, Ctrl+I italic, Ctrl+K link.</p>

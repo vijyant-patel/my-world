@@ -1,0 +1,21 @@
+{% extends "bookbrief/bookbrief_base.html" %}
+{% block title %}Summaries – BookBrief{% endblock %}
+{% block meta_description %}<meta name="description" content="Browse book summaries. Quick, detailed, and chapter-wise summaries.">{% endblock %}
+{% block bookbrief_content %}
+{% url 'summary_add' as summary_add_url %}
+<h1 class="page-title">Summaries</h1>
+{% if user.is_authenticated %}<p class="page-actions">{% include "bookbrief/components/_button.html" with href=summary_add_url label="Add summary" variant="primary" %}</p>{% endif %}
+{% include "bookbrief/components/_search_box.html" with action=request.path name="search" value=request.GET.search placeholder="Search summaries…" %}
+<section class="summary-list">
+    {% if summary_list %}
+        <div class="cards">
+            {% for summary in summary_list %}
+                {% include "bookbrief/components/_summary_card.html" with summary=summary %}
+            {% endfor %}
+        </div>
+        {% include "bookbrief/components/_pagination.html" with page_obj=page_obj %}
+    {% else %}
+        <p class="empty-state">No summaries found.{% if user.is_authenticated %} {% include "bookbrief/components/_button.html" with href=summary_add_url label="Add one" variant="primary" %}{% endif %}</p>
+    {% endif %}
+</section>
+{% endblock %}

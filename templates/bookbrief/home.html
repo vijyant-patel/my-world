@@ -1,0 +1,37 @@
+{% extends "bookbrief/bookbrief_base.html" %}
+{% block title %}Home – BookBrief{% endblock %}
+{% block bookbrief_content %}
+{% url 'book_list' as search_action %}
+{% url 'summary_list' as summary_list_url %}
+<section class="hero hero--home" aria-labelledby="hero-heading">
+    <h1 id="hero-heading" class="hero__title">Read less, remember more</h1>
+    <p class="hero__tagline">Discover book summaries. Quick, detailed, and chapter-wise.</p>
+    {% include "bookbrief/components/_search_box.html" with action=search_action name="search" value="" placeholder="Search books or authors…" %}
+</section>
+<section class="section section--books" aria-labelledby="recent-books-heading">
+    <h2 id="recent-books-heading" class="section__title">Recent books</h2>
+    {% if recent_books %}
+    <ul class="card-grid card-grid--books">
+        {% for book in recent_books %}
+        <li>{% include "bookbrief/components/_book_card.html" with book=book %}</li>
+        {% endfor %}
+    </ul>
+    <p class="section__cta">{% include "bookbrief/components/_button.html" with href=search_action label="View all books" variant="secondary" %}</p>
+    {% else %}
+    <p class="empty-state">No books yet. <a href="{% url 'book_list' %}">Browse</a> or add one.</p>
+    {% endif %}
+</section>
+<section class="section section--summaries" aria-labelledby="recent-summaries-heading">
+    <h2 id="recent-summaries-heading" class="section__title">Recent summaries</h2>
+    {% if recent_summaries %}
+    <ul class="card-grid card-grid--summaries">
+        {% for s in recent_summaries %}
+        <li>{% include "bookbrief/components/_summary_card.html" with summary=s %}</li>
+        {% endfor %}
+    </ul>
+    <p class="section__cta">{% include "bookbrief/components/_button.html" with href=summary_list_url label="View all summaries" variant="secondary" %}</p>
+    {% else %}
+    <p class="empty-state">No public summaries yet.</p>
+    {% endif %}
+</section>
+{% endblock %}

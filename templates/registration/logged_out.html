@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Logged out – BookBrief{% endblock %}
+{% block content %}
+<h1 class="page-title">You have been logged out.</h1>
+<p><a href="{% url 'login' %}">Log in again</a> · <a href="{% url 'home' %}">Home</a></p>
+{% endblock %}

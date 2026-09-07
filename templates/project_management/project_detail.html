@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.name }} | Project Management{% endblock %}
+
+{% block content %}
+<div class="project-header" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+            <h1 style="margin-bottom: 0.5rem;">{{ project.name }}</h1>
+            <p style="color: #6b7280; max-width: 800px;">{{ project.description }}</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{% url 'project_management:task_create' project.pk %}" class="btn btn-primary" style="background: #2563eb; color: white; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; font-weight: 600;">+ New Task</a>
+            <a href="{% url 'project_management:sprint_create' project.pk %}" class="btn" style="background: #10b981; color: white; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; font-weight: 600;">+ New Sprint</a>
+            <a href="{% url 'project_management:issue_create' project.pk %}" class="btn" style="background: #ef4444; color: white; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; font-weight: 600;">+ New Issue</a>
+        </div>
+    </div>
+</div>
+
+<div class="tabs" style="border-bottom: 1px solid #e5e7eb; margin-bottom: 1.5rem; display: flex; gap: 2rem;">
+    <button class="tab-btn active" onclick="openTab('tasks')" style="background: none; border: none; border-bottom: 2px solid #2563eb; color: #2563eb; padding: 0.5rem 0; font-weight: 600; cursor: pointer; font-size: 1rem;">Tasks</button>
+    <button class="tab-btn" onclick="openTab('sprints')" style="background: none; border: none; border-bottom: 2px solid transparent; color: #6b7280; padding: 0.5rem 0; font-weight: 600; cursor: pointer; font-size: 1rem;">Sprints</button>
+    <button class="tab-btn" onclick="openTab('issues')" style="background: none; border: none; border-bottom: 2px solid transparent; color: #6b7280; padding: 0.5rem 0; font-weight: 600; cursor: pointer; font-size: 1rem;">Issues</button>
+    <button class="tab-btn" onclick="openTab('members')" style="background: none; border: none; border-bottom: 2px solid transparent; color: #6b7280; padding: 0.5rem 0; font-weight: 600; cursor: pointer; font-size: 1rem;">Members</button>
+</div>
+
+<div id="tasks" class="tab-content active" style="display: block;">
+    <h3>All Tasks</h3>
+    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+        <input type="text" id="taskSearchInput" onkeyup="filterTasks()" placeholder="Search tasks by title..." style="flex: 1; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.95rem; min-width: 200px;">
+        <select id="taskSprintSelect" onchange="filterTasks()" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.95rem; background: white; min-width: 200px;">
+            <option value="all">All Sprints</option>
+            <option value="backlog">Backlog (No Sprint)</option>
+            {% for sprint in sprints %}
+            <option value="{{ sprint.pk }}">{{ sprint.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="task-list" style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for task in tasks %}
+        <div class="task-item" data-title="{{ task.title|lower }}" data-sprint-id="{{ task.sprint.pk|default:'backlog' }}" style="border: 1px solid #e5e7eb; padding: 1rem; border-radius: 6px; background: white; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'" onclick="window.location.href='{% url 'project_management:task_detail' task.pk %}'">
+            <div>
+                <strong style="color: #111827;">{{ task.title }}</strong>
+                <span style="color: #6b7280; font-size: 0.85rem; margin-left: 0.5rem;">{{ task.get_status_display }}</span>
+            </div>
+            <div style="font-size: 0.85rem; color: #6b7280;">
+                {% if task.sprint %}{{ task.sprint.name }}{% else %}Backlog{% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <p style="color: #6b7280;">No tasks found.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="sprints" class="tab-content" style="display: none;">
+    <h3>Sprints</h3>
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for sprint in sprints %}
+        <div style="border: 1px solid #e5e7eb; padding: 1rem; border-radius: 6px; background: white; display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'" onclick="window.location.href='{% url 'project_management:sprint_detail' sprint.pk %}'">
+            <div>
+                <span style="color: #2563eb; font-weight: bold;">{{ sprint.name }}</span> ({{ sprint.get_status_display }})
+                <p style="margin: 0.5rem 0; color: #6b7280; font-size: 0.9rem;">{{ sprint.goal }}</p>
+                <div style="font-size: 0.85rem; color: #9ca3af;">{{ sprint.start_date }} to {{ sprint.end_date }}</div>
+            </div>
+            <a href="{% url 'project_management:sprint_update' sprint.pk %}" onclick="event.stopPropagation()" style="font-size: 0.85rem; color: #2563eb; text-decoration: none; border: 1px solid #d1d5db; padding: 0.25rem 0.5rem; border-radius: 4px; background: white;">Edit</a>
+        </div>
+        {% empty %}
+        <p style="color: #6b7280;">No sprints found.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="issues" class="tab-content" style="display: none;">
+    <h3>Issues</h3>
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for issue in issues %}
+        <div style="border: 1px solid #e5e7eb; padding: 1rem; border-radius: 6px; background: white; display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'" onclick="window.location.href='{% url 'project_management:issue_detail' issue.pk %}'">
+            <div>
+                <span style="color: #2563eb; font-weight: bold;">{{ issue.title }}</span> - <span style="color: #ef4444;">{{ issue.get_severity_display }}</span>
+                <p style="margin: 0.5rem 0; color: #6b7280; font-size: 0.9rem;">{{ issue.description|truncatewords:20 }}</p>
+                <div style="font-size: 0.85rem; color: #9ca3af;">Status: {{ issue.get_status_display }}</div>
+            </div>
+            <a href="{% url 'project_management:issue_update' issue.pk %}" onclick="event.stopPropagation()" style="font-size: 0.85rem; color: #2563eb; text-decoration: none; border: 1px solid #d1d5db; padding: 0.25rem 0.5rem; border-radius: 4px; background: white;">Edit</a>
+        </div>
+        {% empty %}
+        <p style="color: #6b7280;">No issues found.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="members" class="tab-content" style="display: none;">
+    <h3>Project Members</h3>
+    <ul style="list-style-type: none; padding: 0;">
+        {% for member in members %}
+        <li style="padding: 0.75rem 0; border-bottom: 1px solid #f3f4f6;">
+            <strong>{{ member.user.name }}</strong> ({{ member.user.phone }})
+            <span style="color: #6b7280; margin-left: 1rem;">Role: {{ member.role.name }}</span>
+        </li>
+        {% empty %}
+        <p style="color: #6b7280;">No members found.</p>
+        {% endfor %}
+    </ul>
+</div>
+
+<script>
+function openTab(tabName) {
+    var contents = document.getElementsByClassName("tab-content");
+    for (var i = 0; i < contents.length; i++) {
+        contents[i].style.display = "none";
+    }
+    
+    var btns = document.getElementsByClassName("tab-btn");
+    for (var i = 0; i < btns.length; i++) {
+        btns[i].style.borderBottomColor = "transparent";
+        btns[i].style.color = "#6b7280";
+    }
+    
+    document.getElementById(tabName).style.display = "block";
+    event.currentTarget.style.borderBottomColor = "#2563eb";
+    event.currentTarget.style.color = "#2563eb";
+    event.currentTarget.classList.add("active");
+}
+
+function filterTasks() {
+    var searchInput = document.getElementById("taskSearchInput").value.toLowerCase();
+    var sprintSelect = document.getElementById("taskSprintSelect").value;
+    var tasks = document.getElementsByClassName("task-item");
+    
+    for (var i = 0; i < tasks.length; i++) {
+        var task = tasks[i];
+        var title = task.getAttribute("data-title");
+        var sprintId = task.getAttribute("data-sprint-id");
+        
+        var matchesSearch = title.indexOf(searchInput) > -1;
+        var matchesSprint = (sprintSelect === "all") || (sprintSelect === sprintId);
+        
+        if (matchesSearch && matchesSprint) {
+            task.style.display = "flex";
+        } else {
+            task.style.display = "none";
+        }
+    }
+}
+</script>
+{% endblock %}

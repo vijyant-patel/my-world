@@ -1,0 +1,16 @@
+<article class="card card-summary">
+    <div class="card-body">
+        <p class="card-meta">{{ summary.get_summary_type_display }}{% if summary.book %} · {{ summary.book.title }}{% endif %}</p>
+        <h3 class="card-title">
+            <a href="{% url 'summary_detail' summary.pk %}">
+                {% if summary.title %}{{ summary.title }}{% else %}{{ summary.book.title }}{% endif %}
+            </a>
+        </h3>
+        <p class="meta">by {{ summary.user.username }}{% if summary.book %} · {{ summary.book.author }}{% endif %}</p>
+        <p class="excerpt">{{ summary.quick_preview|default:summary.content|truncatewords:25 }}</p>
+        {% if summary.estimated_reading_minutes %}
+            <p class="reading-time">{{ summary.estimated_reading_minutes }} min read</p>
+        {% endif %}
+        <a href="{% url 'summary_detail' summary.pk %}" class="card-link">Read summary →</a>
+    </div>
+</article>

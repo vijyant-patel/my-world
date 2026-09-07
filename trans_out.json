@@ -1,0 +1,157 @@
+{
+  "translation": [
+    [
+      "नमस्ते, आप कैसे हैं? ",
+      "Hello, how are you? ",
+      null,
+      null,
+      10
+    ],
+    [
+      "प्रोग्रामिंग में मल्टीथ्रेडिंग एक अवधारणा है।",
+      "Multithreading is a concept in programming.",
+      null,
+      null,
+      3,
+      null,
+      null,
+      [
+        []
+      ],
+      [
+        [
+          [
+            "458941ec00fd20f22c6168237a5d2eaa",
+            "en_hi_2023q1.md"
+          ]
+        ]
+      ]
+    ],
+    [
+      null,
+      null,
+      "namaste, aap kaise han? programming mein maltiithreding ek avdharna hai।"
+    ]
+  ],
+  "all-translations": null,
+  "original-language": "en",
+  "possible-translations": [
+    [
+      "Hello, how are you?",
+      null,
+      [
+        [
+          "नमस्ते, आप कैसे हैं?",
+          null,
+          true,
+          false,
+          [
+            10
+          ]
+        ],
+        [
+          "नमस्कार किसे हो आप?",
+          null,
+          true,
+          false,
+          [
+            10
+          ]
+        ],
+        [
+          "नमस्ते कैसी हो तुम?",
+          null,
+          true,
+          false,
+          [
+            10
+          ]
+        ],
+        [
+          "हैलो, कैसे हो?",
+          null,
+          true,
+          false,
+          [
+            10
+          ]
+        ],
+        [
+          "हेलो, आप कैसे हैं?",
+          null,
+          true,
+          false,
+          [
+            8
+          ]
+        ]
+      ],
+      [
+        [
+          0,
+          19
+        ]
+      ],
+      "Hello, how are you?",
+      0,
+      0
+    ],
+    [
+      "Multithreading is a concept in programming.",
+      null,
+      [
+        [
+          "प्रोग्रामिंग में मल्टीथ्रेडिंग एक अवधारणा है।",
+          null,
+          true,
+          false,
+          [
+            3
+          ],
+          null,
+          [
+            [
+              3
+            ]
+          ]
+        ],
+        [
+          "मल्टीथ्रेडिंग प्रोग्रामिंग में एक अवधारणा है.",
+          null,
+          true,
+          false,
+          [
+            8
+          ]
+        ]
+      ],
+      [
+        [
+          0,
+          43
+        ]
+      ],
+      "Multithreading is a concept in programming.",
+      0,
+      0
+    ]
+  ],
+  "confidence": 1,
+  "possible-mistakes": null,
+  "language": [
+    [
+      "en"
+    ],
+    null,
+    [
+      1
+    ],
+    [
+      "en"
+    ]
+  ],
+  "synonyms": null,
+  "definitions": null,
+  "examples": null,
+  "see-also": null
+}

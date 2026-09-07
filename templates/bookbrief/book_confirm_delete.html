@@ -1,0 +1,15 @@
+{% extends "bookbrief/bookbrief_base.html" %}
+{% block title %}Delete {{ object.title }} – BookBrief{% endblock %}
+{% block bookbrief_content %}
+<div class="form-wrap form-wrap--page">
+    <h1 class="form-wrap__title">Delete book</h1>
+    <p>Are you sure you want to delete <strong>{{ object.title }}</strong> by {{ object.author }}? This will also remove all summaries and reviews for this book.</p>
+    <form method="post" class="form form--light">
+        {% csrf_token %}
+        <p class="form-actions">
+            <button type="submit" class="btn btn--danger">Delete</button>
+            <a href="{% url 'book_detail' object.slug %}" class="btn btn--secondary">Cancel</a>
+        </p>
+    </form>
+</div>
+{% endblock %}

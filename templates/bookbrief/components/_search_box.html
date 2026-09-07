@@ -1,0 +1,14 @@
+{# Unified search box. Pass: action, name (default search), value, placeholder. Optional: categories (for select), select_name (default category) #}
+<form method="get" action="{{ action }}" class="search-box" role="search">
+    <label for="search-box-{{ name|default:'search' }}" class="visually-hidden">{{ placeholder }}</label>
+    <input id="search-box-{{ name|default:'search' }}" type="search" name="{{ name|default:'search' }}" value="{{ value|default:'' }}" class="search-box__input" placeholder="{{ placeholder }}" aria-label="{{ placeholder }}">
+    {% if categories %}
+        <select name="{{ select_name|default:'category' }}" class="search-box__select" aria-label="Category">
+            <option value="">All categories</option>
+            {% for cat in categories %}
+                <option value="{{ cat.slug }}" {% if request.GET.category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+    {% endif %}
+    <button type="submit" class="btn btn--primary search-box__btn">Search</button>
+</form>

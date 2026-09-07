@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Register – BookBrief{% endblock %}
+{% block content %}
+<div class="form-wrap form-wrap--auth">
+    <h1 class="form-wrap__title">Create an account</h1>
+    <form method="post" action="{% url 'register' %}" class="form form--light">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            {% include "bookbrief/components/_form_errors.html" with errors=form.non_field_errors %}
+        {% endif %}
+        {% for field in form %}
+            {% include "bookbrief/components/_form_field.html" with field=field %}
+        {% endfor %}
+        <p class="form-actions">
+            <button type="submit" class="btn btn--primary">Register</button>
+        </p>
+    </form>
+    <p class="form-wrap__footer"><a href="{% url 'login' %}" class="form-wrap__link">Already have an account? Log in</a></p>
+</div>
+{% endblock %}

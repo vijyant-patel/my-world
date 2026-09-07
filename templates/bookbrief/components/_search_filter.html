@@ -1,0 +1,14 @@
+{# Legacy search filter; prefer _search_box.html with action, value, placeholder, categories. Uses same .search-box classes for consistency. #}
+<form method="get" action="{{ request.path }}" class="search-box" role="search">
+    <label for="search-box-search" class="visually-hidden">{{ placeholder|default:"Search…" }}</label>
+    <input id="search-box-search" type="search" name="search" value="{{ request.GET.search }}" class="search-box__input" placeholder="{{ placeholder|default:'Search…' }}" aria-label="{{ placeholder|default:'Search' }}">
+    {% if categories %}
+        <select name="category" class="search-box__select" aria-label="Category">
+            <option value="">All categories</option>
+            {% for cat in categories %}
+                <option value="{{ cat.slug }}" {% if request.GET.category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+    {% endif %}
+    <button type="submit" class="btn btn--primary search-box__btn">Search</button>
+</form>

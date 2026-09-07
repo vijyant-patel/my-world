@@ -1,0 +1,98 @@
+{% extends 'cricket/cricket_base.html' %}
+
+{% block title %}Cricket Dashboard - BookBrief ERP{% endblock %}
+
+{% block cricket_content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h2">Cricket Module Dashboard</h1>
+        <p class="text-muted">Overview of matches, results, and betting summary.</p>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Upcoming Matches</h5>
+                <h2 class="display-6">{{ upcoming_matches.count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Ongoing Matches</h5>
+                <h2 class="display-6">{{ ongoing_matches.count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Total Bets Staked</h5>
+                <h2 class="display-6">Rs. {{ total_staked|default:"0" }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Net P/L</h5>
+                <h2
+                    class="display-6 {% if total_profit > 0 %}text-success{% elif total_profit < 0 %}text-danger{% endif %}">
+                    Rs. {{ total_profit }}
+                </h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">Recent Results</h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for match in recent_matches %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ match.team1.short_name }} vs {{ match.team2.short_name }}</strong>
+                            <small class="d-block text-muted">{{ match.match_date|date:"M d, Y" }} - {{ match.venue
+                                }}</small>
+                        </div>
+                        <span class="badge bg-success rounded-pill">Winner: {{ match.winner.short_name|default:"Tied/NR"
+                            }}</span>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted">No recent completed matches.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="card-footer bg-white border-top">
+                <a href="{% url 'cricket:matches' %}" class="btn btn-sm btn-outline-primary">View All Matches</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">Quick Menu</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'cricket:teams' %}" class="list-group-item list-group-item-action">Manage Teams</a>
+                    <a href="{% url 'cricket:players' %}" class="list-group-item list-group-item-action">Manage
+                        Players</a>
+                    <a href="{% url 'cricket:matches' %}" class="list-group-item list-group-item-action">Match
+                        Center</a>
+                    <a href="{% url 'cricket:betting' %}" class="list-group-item list-group-item-action">Betting
+                        History</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

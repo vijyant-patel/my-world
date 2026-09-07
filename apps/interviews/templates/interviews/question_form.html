@@ -1,0 +1,231 @@
+{% extends "interviews/base.html" %}
+{% block title %}{% if object %}Edit Question{% else %}Add Question{% endif %} - Interviews{% endblock %}
+{% block nav_questions %}bg-slate-200 dark:bg-slate-700{% endblock %}
+{% block content %}
+<div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-5xl mx-auto">
+    <div class="mb-6 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">{% if object %}Edit Question{% else %}Add New Question{% endif %}</h1>
+        <a href="{% url 'interviews:questions' %}" class="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">← Back to Question Bank</a>
+    </div>
+    
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Metadata Section -->
+        <div class="bg-white dark:bg-slate-800 shadow-lg rounded-sm border border-slate-200 dark:border-slate-700 p-6">
+            <h2 class="text-lg font-semibold mb-4 text-slate-800 dark:text-slate-100 border-b border-slate-100 dark:border-slate-700 pb-2">Question Metadata</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for field in form %}
+                <div class="flex flex-col mb-4">
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        {{ field.label }}
+                    </label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% if field.errors %}
+                    <p class="mt-1 text-xs text-red-500">{{ field.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Content Blocks Section -->
+        <div class="bg-white dark:bg-slate-800 shadow-lg rounded-sm border border-slate-200 dark:border-slate-700 p-6" x-data="formsetManager()">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">
+                <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Knowledge Content Blocks</h2>
+                <button type="button" @click="addForm" class="text-sm bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-slate-700 dark:text-indigo-400 px-3 py-1 rounded transition">+ Add Content Block</button>
+            </div>
+            
+            {{ content_formset.management_form }}
+            
+            <div id="formset-container" class="space-y-6">
+                {% for content_form in content_formset %}
+                <div class="content-form border border-slate-200 dark:border-slate-600 rounded-md p-4 bg-slate-50 dark:bg-slate-900/50 relative">
+                    {% for hidden in content_form.hidden_fields %}
+                        {{ hidden }}
+                    {% endfor %}
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div class="col-span-1">
+                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-400 mb-1">Type</label>
+                            {{ content_form.content_type }}
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-400 mb-1">Optional Title</label>
+                            {{ content_form.title }}
+                        </div>
+                        <div class="col-span-1">
+                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-400 mb-1">Language (Code)</label>
+                            {{ content_form.language }}
+                        </div>
+                        <div class="col-span-1">
+                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-400 mb-1">Diagram Type</label>
+                            {{ content_form.diagram_type }}
+                        </div>
+                        <div class="col-span-1">
+                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-400 mb-1">Order</label>
+                            {{ content_form.display_order }}
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col space-y-6 mt-4">
+                        <div class="w-full min-w-0">
+                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-400 mb-1">Content (English Markdown)</label>
+                            {{ content_form.content }}
+                        </div>
+                        <div class="w-full min-w-0">
+                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-400 mb-1">Content (Roman English Markdown)</label>
+                            {{ content_form.content_roman }}
+                        </div>
+                    </div>
+                    
+                    {% if content_formset.can_delete and content_form.instance.pk %}
+                    <div class="mt-4 flex items-center">
+                        {{ content_form.DELETE }}
+                        <label class="ml-2 text-sm text-red-500" for="{{ content_form.DELETE.id_for_label }}">Delete this block</label>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Empty Form Template for AlpineJS -->
+            <template id="empty-form">
+                <div class="content-form border border-slate-200 dark:border-slate-600 rounded-md p-4 bg-slate-50 dark:bg-slate-900/50 relative">
+                    {% for hidden in content_formset.empty_form.hidden_fields %}
+                        {{ hidden }}
+                    {% endfor %}
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div class="col-span-1">
+                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-400 mb-1">Type</label>
+                            {{ content_formset.empty_form.content_type }}
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-400 mb-1">Optional Title</label>
+                            {{ content_formset.empty_form.title }}
+                        </div>
+                        <div class="col-span-1">
+                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-400 mb-1">Language (Code)</label>
+                            {{ content_formset.empty_form.language }}
+                        </div>
+                        <div class="col-span-1">
+                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-400 mb-1">Diagram Type</label>
+                            {{ content_formset.empty_form.diagram_type }}
+                        </div>
+                        <div class="col-span-1">
+                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-400 mb-1">Order</label>
+                            {{ content_formset.empty_form.display_order }}
+                        </div>
+                    </div>
+                    <div class="flex flex-col space-y-6 mt-4">
+                        <div class="w-full min-w-0">
+                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-400 mb-1">Content (English Markdown)</label>
+                            {{ content_formset.empty_form.content }}
+                        </div>
+                        <div class="w-full min-w-0">
+                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-400 mb-1">Content (Roman English Markdown)</label>
+                            {{ content_formset.empty_form.content_roman }}
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+        
+        <div class="mt-8 flex justify-end">
+            <a href="{% url 'interviews:questions' %}" class="btn bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-300 mr-2 rounded px-4 py-2 border shadow-sm">Cancel</a>
+            <button type="submit" class="btn bg-indigo-500 hover:bg-indigo-600 text-white rounded px-4 py-2 shadow-sm">Save Knowledge</button>
+        </div>
+    </form>
+</div>
+
+<style>
+    /* Styling for form elements */
+    form input[type="text"], form input[type="number"], form select {
+        @apply w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition;
+    }
+    textarea { display: none; }
+    .quill-editor { min-height: 200px; background-color: #fff; width: 100%; }
+    .ql-toolbar { flex-wrap: wrap; } /* Ensure toolbar buttons wrap on small screens */
+    .dark .quill-editor { background-color: #1e293b; color: #f8fafc; border-color: #475569; }
+    .dark .ql-toolbar { background-color: #334155; border-color: #475569; }
+    .dark .ql-stroke { stroke: #cbd5e1; }
+    .dark .ql-fill { fill: #cbd5e1; }
+    .dark .ql-picker { color: #cbd5e1; }
+</style>
+
+<script>
+    const quillOptions = {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                [{ 'size': ['small', false, 'large', 'huge'] }],
+                [{ 'color': [] }, { 'background': [] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                ['blockquote', 'code-block'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                [{ 'align': [] }],
+                ['link', 'image'],
+                ['clean']
+            ]
+        }
+    };
+
+    function initQuill(selector) {
+        document.querySelectorAll(selector).forEach(textarea => {
+            if (textarea.dataset.quillInitialized) return;
+            
+            // Hide textarea and create Quill container
+            textarea.style.display = 'none';
+            const editorDiv = document.createElement('div');
+            editorDiv.className = 'quill-editor';
+            textarea.parentNode.insertBefore(editorDiv, textarea.nextSibling);
+            
+            // Initialize Quill
+            const quill = new Quill(editorDiv, quillOptions);
+            
+            // Load existing content
+            if (textarea.value) {
+                quill.root.innerHTML = textarea.value;
+            }
+            
+            // Sync Quill content back to textarea on change
+            quill.on('text-change', function() {
+                textarea.value = quill.root.innerHTML;
+            });
+            
+            textarea.dataset.quillInitialized = 'true';
+        });
+    }
+
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('formsetManager', () => ({
+            totalForms: parseInt(document.getElementById('id_contents-TOTAL_FORMS').value),
+            
+            init() {
+                setTimeout(() => initQuill('textarea:not([id*="__prefix__"])'), 100);
+            },
+            
+            addForm() {
+                const template = document.getElementById('empty-form').innerHTML;
+                const container = document.getElementById('formset-container');
+                const newFormHtml = template.replace(/__prefix__/g, this.totalForms);
+                
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = newFormHtml;
+                container.appendChild(wrapper.firstElementChild);
+                
+                // Initialize Quill on the newly added textareas
+                setTimeout(() => {
+                    initQuill(`#id_contents-${this.totalForms}-content`);
+                    initQuill(`#id_contents-${this.totalForms}-content_roman`);
+                    this.totalForms++;
+                    document.getElementById('id_contents-TOTAL_FORMS').value = this.totalForms;
+                }, 50);
+            }
+        }));
+    });
+</script>
+{% endblock %}

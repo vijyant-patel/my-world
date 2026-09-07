@@ -1,0 +1,11 @@
+<div class="comment{% if comment.parent %} comment-reply{% endif %}" id="comment-{{ comment.id }}">
+    <p class="comment-meta">{{ comment.user.username }} · {{ comment.created_at|timesince }} ago</p>
+    <p class="comment-body">{{ comment.body|linebreaks }}</p>
+    {% if comment.children.all %}
+        <div class="comment-children">
+            {% for child in comment.children.all %}
+                {% include "bookbrief/components/_comment.html" with comment=child %}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>

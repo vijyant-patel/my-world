@@ -1,0 +1,6 @@
+{# Standalone error list. Pass: errors (list of strings) #}
+<ul class="form-errors form-errors--block" role="alert">
+    {% for error in errors %}
+        <li class="form-errors__item">{{ error }}</li>
+    {% endfor %}
+</ul>

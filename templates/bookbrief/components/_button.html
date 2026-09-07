@@ -1,0 +1,6 @@
+{# Reusable button or button-styled link. Pass: label, variant=primary|secondary|danger, size=sm (optional), aria_label (optional). For link: href. For button: type=submit|button. #}
+{% if href %}
+    <a href="{{ href }}" class="btn btn--{{ variant|default:'primary' }}{% if size %} btn--{{ size }}{% endif %}" {% if aria_label %}aria-label="{{ aria_label }}"{% endif %}>{{ label }}</a>
+{% else %}
+    <button type="{{ type|default:'submit' }}" class="btn btn--{{ variant|default:'primary' }}{% if size %} btn--{{ size }}{% endif %}" {% if aria_label %}aria-label="{{ aria_label }}"{% endif %}>{{ label }}</button>
+{% endif %}

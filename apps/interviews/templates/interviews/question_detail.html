@@ -1,0 +1,172 @@
+{% extends "interviews/base.html" %}
+{% block title %}{{ question.title }} - Interviews{% endblock %}
+{% block nav_questions %}bg-slate-200 dark:bg-slate-700{% endblock %}
+
+{% block content %}
+<div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-5xl mx-auto flex flex-col md:flex-row gap-8 items-start" x-data="{ lang: 'english' }">
+    
+    <!-- Main Content Area -->
+    <div class="flex-1 w-full min-w-0">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <a href="{% url 'interviews:questions' %}" class="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition inline-flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Back to Knowledge Base
+                </a>
+                
+                <!-- Language Toggle -->
+                <div class="bg-slate-200 dark:bg-slate-700 p-1 rounded-lg flex space-x-1 shrink-0">
+                    <button @click="lang = 'english'" :class="lang === 'english' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'" class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all">English</button>
+                    <button @click="lang = 'roman'" :class="lang === 'roman' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'" class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all">Hinglish</button>
+                </div>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-4 sm:space-y-0">
+                <div>
+                    <h1 class="text-3xl md:text-4xl text-slate-900 dark:text-slate-100 font-extrabold tracking-tight leading-tight">{{ question.title }}</h1>
+                    <div class="flex flex-wrap items-center gap-2 mt-4">
+                        <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md border border-slate-200 dark:border-slate-600">{{ question.get_question_type_display }}</span>
+                        <span class="text-xs font-medium px-2.5 py-1 rounded-md border {% if question.difficulty == 'easy' %}bg-emerald-50 text-emerald-700 border-emerald-200{% elif question.difficulty == 'medium' %}bg-amber-50 text-amber-700 border-amber-200{% else %}bg-rose-50 text-rose-700 border-rose-200{% endif %}">{{ question.get_difficulty_display }}</span>
+                        <span class="text-xs font-medium px-2.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-md">{{ question.get_status_display }}</span>
+                    </div>
+                </div>
+                <div class="flex space-x-2 shrink-0">
+                    <a href="{% url 'interviews:question_edit' question.pk %}" class="btn bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-300 rounded px-4 py-2 border shadow-sm flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        Edit Topic
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Blocks -->
+        <div class="space-y-8">
+            {% for block in question.contents.all %}
+                <section id="block-{{ block.pk }}" class="scroll-mt-24 group relative">
+                    
+                    <!-- Content Type Badge -->
+                    <div class="flex items-center mb-3">
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-sm">
+                            {{ block.get_content_type_display }}
+                        </span>
+                        {% if block.is_ai_generated %}
+                        <span class="ml-2 text-[10px] font-bold uppercase tracking-widest text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded-sm border border-indigo-100 dark:border-indigo-800">
+                            ✨ AI Generated
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    {% if block.title %}
+                        <h2 class="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">{{ block.title }}</h2>
+                    {% endif %}
+
+                    <!-- Render Content based on Type -->
+                    {% if block.content_type == 'diagram' and block.diagram_type == 'mermaid' %}
+                        <!-- Mermaid Diagram -->
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-sm overflow-x-auto flex justify-center">
+                            <div class="mermaid">
+                                {{ block.content|striptags }}
+                            </div>
+                        </div>
+                    {% elif block.content_type == 'flashcard' %}
+                        <!-- Flashcard UI -->
+                        <div x-data="{ flipped: false }" class="perspective-1000 w-full max-w-lg mx-auto h-64 cursor-pointer" @click="flipped = !flipped">
+                            <div class="relative w-full h-full transition-transform duration-500 transform-style-3d shadow-md rounded-xl" :class="{'rotate-y-180': flipped}">
+                                <div class="absolute w-full h-full backface-hidden bg-white dark:bg-slate-800 border-2 border-indigo-100 dark:border-indigo-900 rounded-xl flex items-center justify-center p-6 text-center">
+                                    <span class="text-slate-400 absolute top-4 text-xs font-bold uppercase tracking-wider">Click to Flip</span>
+                                    <div class="text-xl font-medium text-slate-800 dark:text-slate-200">{{ block.title|default:"Flashcard" }}</div>
+                                </div>
+                                <div class="absolute w-full h-full backface-hidden bg-indigo-50 dark:bg-slate-700 border-2 border-indigo-200 dark:border-slate-600 rounded-xl p-6 overflow-y-auto rotate-y-180">
+                                    <div class="prose dark:prose-invert prose-sm" x-data="{ 
+                                        en: `{{ block.content|escapejs }}`, 
+                                        ro: `{{ block.content_roman|escapejs }}` 
+                                    }" x-html="marked.parse(lang === 'roman' && ro ? ro : en)"></div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Standard Markdown Content -->
+                        <div class="bg-white dark:bg-slate-800 shadow-sm rounded-lg border border-slate-200 dark:border-slate-700 p-6 sm:p-8">
+                            
+                            <!-- Language tag for Code Blocks -->
+                            {% if 'code' in block.content_type and block.language %}
+                                <div class="absolute top-0 right-0 rounded-bl-lg rounded-tr-lg bg-slate-800 text-slate-300 text-xs font-mono px-3 py-1 border-b border-l border-slate-700">
+                                    {{ block.language }}
+                                </div>
+                            {% endif %}
+
+                            <div class="prose prose-slate dark:prose-invert max-w-none 
+                                {% if block.content_type == 'quick_answer' %}prose-lg font-medium text-slate-700 dark:text-slate-300{% endif %}
+                                {% if block.content_type == 'anti_pattern' %}prose-rose{% endif %}
+                                {% if block.content_type == 'interview_tip' %}prose-indigo{% endif %}" 
+                                x-data="{ 
+                                    en: `{{ block.content|escapejs }}`, 
+                                    ro: `{{ block.content_roman|escapejs }}` 
+                                }" x-html="marked.parse(lang === 'roman' && ro ? ro : en)">
+                            </div>
+                        </div>
+                    {% endif %}
+                </section>
+            {% empty %}
+                <div class="text-center py-12 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg border-dashed">
+                    <p class="text-slate-500 mb-4">No knowledge blocks added to this topic yet.</p>
+                    <a href="{% url 'interviews:question_edit' question.pk %}" class="text-indigo-600 hover:underline font-medium">Add some content</a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Sticky Right Sidebar (Table of Contents) -->
+    <div class="hidden md:block w-64 shrink-0">
+        <div class="sticky top-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-5 shadow-sm">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Table of Contents</h3>
+            <ul class="space-y-3 text-sm">
+                {% for block in question.contents.all %}
+                <li>
+                    <a href="#block-{{ block.pk }}" class="text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition flex items-center">
+                        <span class="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 mr-2 shrink-0"></span>
+                        <span class="truncate">{{ block.title|default:block.get_content_type_display }}</span>
+                    </a>
+                </li>
+                {% empty %}
+                <li class="text-slate-400 text-xs italic">No sections</li>
+                {% endfor %}
+            </ul>
+            
+            <div class="mt-8 pt-6 border-t border-slate-100 dark:border-slate-700">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Metadata</h3>
+                <div class="space-y-2 text-xs text-slate-500">
+                    <p>Created: <span class="font-medium text-slate-700 dark:text-slate-300">{{ question.created_at|date:"M d, Y" }}</span></p>
+                    <p>Updated: <span class="font-medium text-slate-700 dark:text-slate-300">{{ question.updated_at|date:"M d, Y" }}</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* CSS for 3D Flip effect (Flashcards) */
+    .perspective-1000 { perspective: 1000px; }
+    .transform-style-3d { transform-style: preserve-3d; }
+    .backface-hidden { backface-visibility: hidden; }
+    .rotate-y-180 { transform: rotateY(180deg); }
+    
+    /* Enhance marked.js code blocks automatically */
+    .prose pre {
+        background-color: #1e293b !important;
+        color: #e2e8f0 !important;
+        border-radius: 0.5rem;
+        border: 1px solid #334155;
+    }
+
+    /* Quill.js Classes Override (to prevent Tailwind Typography from resetting them) */
+    .prose .ql-size-small { font-size: 0.75em !important; }
+    .prose .ql-size-large { font-size: 1.5em !important; }
+    .prose .ql-size-huge { font-size: 2em !important; line-height: 1.2; }
+    
+    .prose .ql-align-center { text-align: center !important; }
+    .prose .ql-align-right { text-align: right !important; }
+    .prose .ql-align-justify { text-align: justify !important; }
+</style>
+{% endblock %}

@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}{{ task.title }} | Project Management{% endblock %}
+
+{% block content %}
+<div class="task-header" style="margin-bottom: 2rem;">
+    <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 0.5rem;">
+        <a href="{% url 'project_management:project_detail' task.project.pk %}" style="text-decoration: none; color: #2563eb;">{{ task.project.name }}</a>
+        {% if task.sprint %}
+        &rsaquo; {{ task.sprint.name }}
+        {% endif %}
+        &rsaquo; {{ task.title }}
+    </div>
+    
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <h1 style="margin: 0; font-size: 1.8rem;">{{ task.title }}</h1>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            {% if active_work_log %}
+                <div style="display: flex; align-items: center; gap: 0.5rem; background: #fee2e2; padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid #fca5a5;">
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444; animation: blink 1.5s infinite;"></div>
+                    <span style="font-size: 0.85rem; color: #991b1b; font-weight: 600;">Timer Active ({{ active_work_log.start_time|timesince }})</span>
+                    <button onclick="document.getElementById('stopTimerModal').style.display='flex'" class="btn" style="background: #ef4444; color: white; padding: 0.35rem 0.75rem; border-radius: 4px; border: none; font-weight: 600; cursor: pointer; margin-left: 0.5rem;">Stop Work</button>
+                </div>
+                <style>@keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }</style>
+            {% else %}
+                <form method="post" action="{% url 'project_management:task_worklog_start' task.pk %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn" style="background: #10b981; color: white; padding: 0.5rem 1rem; border-radius: 4px; border: none; font-weight: 600; cursor: pointer;">▶ Start Work</button>
+                </form>
+            {% endif %}
+            <a href="{% url 'project_management:task_update' task.pk %}" class="btn" style="background: #f3f4f6; color: #374151; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; font-weight: 600; border: 1px solid #d1d5db; margin-left: 0.5rem;">Edit Task</a>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    <!-- Main Content Left -->
+    <div>
+        <div class="card" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; background: white; margin-bottom: 1.5rem;">
+            <h3 style="margin-top: 0;">Description</h3>
+            <div style="color: #374151; line-height: 1.6;">
+                {{ task.description|linebreaks|default:"<p style='color: #9ca3af;'>No description provided.</p>" }}
+            </div>
+        </div>
+        
+        <!-- Checklist Section -->
+        <div class="card" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; background: white; margin-bottom: 1.5rem;">
+            <h3 style="margin-top: 0;">Checklist</h3>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+                {% for item in checklists %}
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <form method="post" action="{% url 'project_management:task_checklist_toggle' item.pk %}" style="margin: 0;">
+                        {% csrf_token %}
+                        <input type="checkbox" onchange="this.form.submit()" {% if item.is_done %}checked{% endif %}>
+                    </form>
+                    <span style="{% if item.is_done %}text-decoration: line-through; color: #9ca3af;{% else %}color: #374151;{% endif %}">
+                        {{ item.content }}
+                    </span>
+                </div>
+                {% empty %}
+                <p style="color: #6b7280; font-size: 0.9rem; margin: 0;">No checklist items.</p>
+                {% endfor %}
+            </div>
+            <form method="post" action="{% url 'project_management:task_checklist_create' task.pk %}" style="display: flex; gap: 0.5rem;">
+                {% csrf_token %}
+                <input type="text" name="content" placeholder="Add a checklist item..." required style="flex: 1; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px;">
+                <button type="submit" class="btn btn-primary" style="background: #2563eb; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: 500;">Add</button>
+            </form>
+        </div>
+        
+        <!-- Time Logs Section -->
+        <details class="card" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; background: white; margin-bottom: 1.5rem; outline: none;">
+            <summary style="cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1rem; outline: none;">
+                <h3 style="margin: 0; border: none; padding: 0;">Time Logs ({{ work_logs.count|default:"0" }})</h3>
+                <span style="font-size: 0.85rem; font-weight: 600; color: #2563eb; background: #eff6ff; padding: 0.25rem 0.75rem; border-radius: 4px;">Show / Hide</span>
+            </summary>
+            <div style="display: flex; flex-direction: column; gap: 1rem; cursor: default; margin-top: 1rem;">
+                {% for log in work_logs %}
+                <div style="border: 1px solid #f3f4f6; padding: 1rem; border-radius: 6px; background: #f9fafb;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="font-weight: 600; color: #111827; font-size: 0.95rem;">{{ log.user.name }}</span>
+                        <span style="color: #6b7280; font-size: 0.85rem;">{{ log.start_time|date:"M d, Y" }}</span>
+                    </div>
+                    <div style="font-size: 0.9rem; color: #374151; margin-bottom: 0.5rem;">
+                        <strong>Work Done:</strong> {{ log.comment|default:"<span style='color: #9ca3af;'>No comment provided.</span>" }}
+                    </div>
+                    <div style="font-size: 0.85rem; color: #2563eb; font-weight: 500;">
+                        ⏱️ Time: {{ log.start_time|date:"h:i:s A" }} - {{ log.end_time|date:"h:i:s A" }}
+                    </div>
+                </div>
+                {% empty %}
+                <p style="color: #6b7280; font-size: 0.9rem; margin: 0;">No time logs yet.</p>
+                {% endfor %}
+            </div>
+        </details>
+
+        <!-- Comments Section -->
+        <div class="card" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; background: white;">
+            <h3 style="margin-top: 0; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">Comments</h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 1.5rem;">
+                {% for comment in comments %}
+                <div style="display: flex; gap: 1rem;">
+                    <div style="width: 32px; height: 32px; border-radius: 50%; background: #10b981; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">
+                        {{ comment.author.name|slice:":1" }}
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                            <span style="font-weight: 600; color: #111827; font-size: 0.95rem;">{{ comment.author.name }}</span>
+                            <span style="font-size: 0.75rem; color: #6b7280;">{{ comment.created_at|timesince }} ago</span>
+                        </div>
+                        <div style="color: #374151; background: #f9fafb; padding: 0.75rem; border-radius: 0 8px 8px 8px; border: 1px solid #f3f4f6;">
+                            {{ comment.body|urlize|linebreaksbr }}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p style="color: #6b7280; font-size: 0.9rem; text-align: center; margin: 2rem 0;">No comments yet. Start the conversation!</p>
+                {% endfor %}
+            </div>
+
+            <form method="post" action="{% url 'project_management:task_comment_create' task.pk %}" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                {% csrf_token %}
+                <div style="width: 100%;">
+                    {{ comment_form.body }}
+                </div>
+                <div style="display: flex; justify-content: flex-end;">
+                    <button type="submit" class="btn btn-primary" style="background: #2563eb; color: white; border: none; padding: 0.5rem 1.5rem; border-radius: 4px; cursor: pointer; font-weight: 600;">Post Comment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Sidebar Right -->
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <div class="card" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; background: white;">
+            <h3 style="margin-top: 0; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem;">Details</h3>
+            <ul style="list-style-type: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1rem;">
+                <li style="display: flex; flex-direction: column;">
+                    <span style="color: #6b7280; font-size: 0.85rem; font-weight: 600;">Status</span>
+                    <span style="font-weight: 500;">{{ task.get_status_display }}</span>
+                </li>
+                <li style="display: flex; flex-direction: column;">
+                    <span style="color: #6b7280; font-size: 0.85rem; font-weight: 600;">Priority</span>
+                    <span style="font-weight: 500;">{{ task.get_priority_display }}</span>
+                </li>
+                <li style="display: flex; flex-direction: column;">
+                    <span style="color: #6b7280; font-size: 0.85rem; font-weight: 600;">Due Date</span>
+                    <span style="font-weight: 500;">{{ task.due_date|default:"None" }}</span>
+                </li>
+                <li style="display: flex; flex-direction: column;">
+                    <span style="color: #6b7280; font-size: 0.85rem; font-weight: 600;">Story Points</span>
+                    <span style="font-weight: 500;">{{ task.story_points|default:"None" }}</span>
+                </li>
+                <li style="display: flex; flex-direction: column;">
+                    <span style="color: #6b7280; font-size: 0.85rem; font-weight: 600;">Reporter</span>
+                    <span style="font-weight: 500;">{{ task.reporter.name }}</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="card" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; background: white;">
+            <h3 style="margin-top: 0; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem;">Assignees</h3>
+            <ul style="list-style-type: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem;">
+                {% for assignee in task.assignees.all %}
+                <li style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div style="width: 24px; height: 24px; border-radius: 50%; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold;">
+                        {{ assignee.name|slice:":1" }}
+                    </div>
+                    <span>{{ assignee.name }}</span>
+                </li>
+                {% empty %}
+                <li style="color: #6b7280; font-size: 0.9rem;">Unassigned</li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <!-- History Section -->
+        <div class="card" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; background: white;">
+            <h3 style="margin-top: 0; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem;">History</h3>
+            <ul style="list-style-type: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.75rem;">
+                {% for log in audit_logs %}
+                <li style="display: flex; flex-direction: column; font-size: 0.85rem;">
+                    <span style="color: #374151;">{{ log.action }}</span>
+                    <span style="color: #9ca3af; font-size: 0.75rem;">by {{ log.user.name|default:"System" }} - {{ log.timestamp|timesince }} ago</span>
+                </li>
+                {% empty %}
+                <li style="color: #6b7280; font-size: 0.85rem;">No history available.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Work Links Section -->
+        <div class="card" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; background: white;">
+            <h3 style="margin-top: 0; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem;">Work Links (Git, Jira)</h3>
+            <ul style="list-style-type: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+                {% for link in work_links %}
+                <li style="display: flex; flex-direction: column;">
+                    <a href="{{ link.url }}" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 500; font-size: 0.9rem;">
+                        {{ link.title|default:link.url }}
+                    </a>
+                    <span style="font-size: 0.75rem; color: #6b7280;">{{ link.link_type|default:"Link" }}</span>
+                </li>
+                {% empty %}
+                <li style="color: #6b7280; font-size: 0.9rem;">No links added.</li>
+                {% endfor %}
+            </ul>
+            <form method="post" action="{% url 'project_management:work_link_create' task.pk %}" style="display: flex; flex-direction: column; gap: 0.5rem; border-top: 1px solid #e5e7eb; padding-top: 1rem;">
+                {% csrf_token %}
+                <input type="url" name="url" placeholder="https://github.com/..." required style="padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.85rem;">
+                <input type="text" name="title" placeholder="Title (optional)" style="padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.85rem;">
+                <input type="text" name="link_type" placeholder="Type (e.g., GitHub)" style="padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.85rem;">
+                <button type="submit" class="btn" style="background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 0.4rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">Add Link</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Stop Timer Modal -->
+<div id="stopTimerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
+    <div style="background: white; padding: 2rem; border-radius: 8px; width: 100%; max-width: 500px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+        <h2 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.5rem; color: #111827;">Stop Timer</h2>
+        <form method="post" action="{% url 'project_management:task_worklog_stop' task.pk %}">
+            {% csrf_token %}
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #374151;">What work did you complete?</label>
+                <textarea name="comment" rows="4" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; font-family: inherit;" required placeholder="Describe your work here..."></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                <button type="button" onclick="document.getElementById('stopTimerModal').style.display='none'" style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; background: white; color: #374151; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>
+                <button type="submit" style="padding: 0.5rem 1rem; border: none; background: #ef4444; color: white; border-radius: 6px; cursor: pointer; font-weight: 600;">Stop & Save Work</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

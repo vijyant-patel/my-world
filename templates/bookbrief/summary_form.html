@@ -1,0 +1,47 @@
+{% extends "bookbrief/bookbrief_base.html" %}
+{% block title %}{% if object %}Edit summary{% else %}Add summary{% endif %} – BookBrief{% endblock %}
+{% block bookbrief_content %}
+<div class="form-wrap form-wrap--page">
+    <h1 class="form-wrap__title">{% if object %}Edit summary{% else %}Add summary{% endif %}</h1>
+    {% if book %}<p class="form-wrap__subtitle">Book: {{ book.title }} by {{ book.author }}</p>{% endif %}
+    <form method="post" class="form form--light form--summary" id="summary-form">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            {% include "bookbrief/components/_form_errors.html" with errors=form.non_field_errors %}
+        {% endif %}
+        {% include "bookbrief/components/_form_field.html" with field=form.book %}
+        {% include "bookbrief/components/_form_field.html" with field=form.summary_type %}
+        {% include "bookbrief/components/_form_field.html" with field=form.title %}
+        <div class="form-group form-group--rich">
+            <label for="id_content" class="form-label">Content <span class="form-label__required" aria-hidden="true">*</span></label>
+            {% include "bookbrief/components/_rich_editor.html" with field=form.content field_id="id_content" field_name="content" %}
+            {% if form.content.errors %}
+                {% include "bookbrief/components/_form_errors.html" with errors=form.content.errors %}
+            {% endif %}
+        </div>
+        {% include "bookbrief/components/_form_field.html" with field=form.quick_preview %}
+        {% include "bookbrief/components/_form_field.html" with field=form.key_takeaways %}
+        {% include "bookbrief/components/_form_field.html" with field=form.estimated_reading_minutes %}
+        <div class="form-group form-group--checkbox">
+            <label for="id_is_public" class="form-label form-label--checkbox">
+                {{ form.is_public }}
+                <span>Public (visible to everyone)</span>
+            </label>
+            {% if form.is_public.errors %}
+                {% include "bookbrief/components/_form_errors.html" with errors=form.is_public.errors %}
+            {% endif %}
+        </div>
+        <p class="form-actions">
+            <button type="submit" class="btn btn--primary">{% if object %}Save changes{% else %}Add summary{% endif %}</button>
+            {% if object %}
+                <a href="{% url 'summary_detail' object.pk %}" class="btn btn--secondary">Cancel</a>
+            {% else %}
+                <a href="{% url 'summary_list' %}" class="btn btn--secondary">Cancel</a>
+            {% endif %}
+        </p>
+    </form>
+</div>
+{% endblock %}
+{% block extra_js %}
+{% include "bookbrief/components/_rich_editor_js.html" with field_id="id_content" %}
+{% endblock %}

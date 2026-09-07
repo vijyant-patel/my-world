@@ -1,0 +1,59 @@
+{% extends "bookbrief/bookbrief_base.html" %}
+{% block title %}Dashboard – BookBrief{% endblock %}
+{% block bookbrief_content %}
+<header class="page-header">
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle">Welcome, {{ user.username }}</p>
+</header>
+<section class="dashboard-section" aria-labelledby="my-books-heading">
+    <h2 id="my-books-heading">My books</h2>
+    {% if my_books %}
+    <ul class="card-grid">
+        {% for book in my_books %}
+        <li>{% include "bookbrief/components/_book_card.html" with book=book %}</li>
+        {% endfor %}
+    </ul>
+    <p class="section__actions">
+        <a href="{% url 'book_list' %}" class="btn btn--secondary">View all</a>
+        <a href="{% url 'book_add' %}" class="btn btn--primary">Add book</a>
+    </p>
+    {% else %}
+    <div class="empty-state">
+        <p>You haven't added any books yet.</p>
+        <a href="{% url 'book_add' %}" class="btn btn--primary">Add your first book</a>
+    </div>
+    {% endif %}
+</section>
+<section class="dashboard-section" aria-labelledby="my-summaries-heading">
+    <h2 id="my-summaries-heading">My summaries</h2>
+    {% if my_summaries %}
+    <ul class="card-grid">
+        {% for summary in my_summaries %}
+        <li>{% include "bookbrief/components/_summary_card_compact.html" with summary=summary %}</li>
+        {% endfor %}
+    </ul>
+    <p class="section__actions">
+        <a href="{% url 'summary_list' %}" class="btn btn--secondary">View all</a>
+        <a href="{% url 'summary_add' %}" class="btn btn--primary">Add summary</a>
+    </p>
+    {% else %}
+    <div class="empty-state">
+        <p>You haven't written any summaries yet.</p>
+        <a href="{% url 'summary_add' %}" class="btn btn--primary">Write a summary</a>
+    </div>
+    {% endif %}
+</section>
+{% if reading_statuses %}
+<section class="dashboard-section" aria-labelledby="reading-status-heading">
+    <h2 id="reading-status-heading">Reading status</h2>
+    <ul class="status-list">
+        {% for status in reading_statuses %}
+        <li class="status-list__item">
+            {% include "bookbrief/components/_status_pill.html" with status=status %}
+            <a href="{% url 'book_detail' status.book.slug %}">{{ status.book.title }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+{% endblock %}

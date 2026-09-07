@@ -1,0 +1,9 @@
+{% if user.is_authenticated %}
+<form method="post" action="{{ review_form_action|default:'' }}" class="form review-form">
+    {% csrf_token %}
+    {{ review_form.as_p }}
+    <button type="submit">Submit review</button>
+</form>
+{% else %}
+<p><a href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">Log in</a> to leave a review.</p>
+{% endif %}

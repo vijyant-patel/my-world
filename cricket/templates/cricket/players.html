@@ -1,0 +1,53 @@
+{% extends 'cricket/cricket_base.html' %}
+
+{% block title %}Players - Cricket Module{% endblock %}
+
+{% block cricket_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Players List</h1>
+    <div>
+        <a href="{% url 'cricket:player_add' %}" class="btn btn-primary btn-sm me-2">+ Add Player</a>
+        <a href="{% url 'cricket:dashboard' %}" class="btn btn-outline-secondary btn-sm">Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Team</th>
+                        <th>Role</th>
+                        <th>Batting Style</th>
+                        <th>Bowling Style</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for player in players %}
+                    <tr>
+                        <td><strong>{{ player.name }}</strong></td>
+                        <td>
+                            <span class="badge bg-primary">{{ player.team.short_name }}</span>
+                        </td>
+                        <td>{{ player.role }}</td>
+                        <td>{{ player.batting_style|default:"-" }}</td>
+                        <td>{{ player.bowling_style|default:"-" }}</td>
+                        <td>
+                            <a href="{% url 'cricket:player_edit' player.id %}" class="btn btn-outline-primary btn-sm">Edit</a>
+                            <a href="{% url 'cricket:player_delete' player.id %}" class="btn btn-outline-danger btn-sm">Delete</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No players found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

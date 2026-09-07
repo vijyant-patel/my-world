@@ -1,0 +1,31 @@
+{% extends "interviews/base.html" %}
+{% block title %}Experiences - Interviews{% endblock %}
+{% block nav_experiences %}bg-slate-200 dark:bg-slate-700{% endblock %}
+{% block content %}
+<div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
+    <div class="sm:flex sm:justify-between sm:items-center mb-8">
+        <div class="mb-4 sm:mb-0">
+            <h1 class="text-2xl md:text-3xl text-slate-800 dark:text-slate-100 font-bold">Interview Experiences 🏢</h1>
+        </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {% for exp in interviews %}
+        <div class="flex flex-col bg-white dark:bg-slate-800 shadow-lg rounded-sm border border-slate-200 dark:border-slate-700">
+            <div class="px-5 pt-5 pb-6">
+                <header class="flex justify-between items-start mb-2">
+                    <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-100">{{ exp.role }} @ {{ exp.company.name }}</h3>
+                    <div class="text-xs inline-flex font-medium rounded-full text-center px-2.5 py-1 {% if exp.result == 'selected' %}bg-emerald-100 text-emerald-600{% elif exp.result == 'rejected' %}bg-rose-100 text-rose-600{% else %}bg-amber-100 text-amber-600{% endif %}">{{ exp.get_result_display }}</div>
+                </header>
+                <div class="text-sm text-slate-500 dark:text-slate-400 mb-4">Interview on {{ exp.interview_date|date:"M d, Y" }}</div>
+                <div class="text-sm">{{ exp.notes|truncatewords:20 }}</div>
+            </div>
+            <div class="border-t border-slate-200 dark:border-slate-700">
+                <a class="block text-center text-sm text-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium px-3 py-4" href="#">View Details -&gt;</a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full p-4 text-center text-slate-500 bg-white shadow-lg rounded-sm border border-slate-200">No experiences logged yet.</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

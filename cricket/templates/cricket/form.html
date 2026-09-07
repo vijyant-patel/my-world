@@ -1,0 +1,68 @@
+{% extends 'cricket/cricket_base.html' %}
+
+{% block title %}
+    {% if object %}Edit {{ model_name|default:"Item" }}{% else %}Add {{ model_name|default:"Item" }}{% endif %} - Cricket Module
+{% endblock %}
+
+{% block cricket_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">
+        {% if object %}Edit{% else %}Add{% endif %} Record
+    </h1>
+    <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">Cancel</a>
+</div>
+
+<div class="card shadow-sm border-0" style="max-width: 600px;">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    <div class="input-group">
+                        <!-- Use Django's default widget rendering, but add Bootstrap form-control class manually if needed, or rely on django-crispy-forms -->
+                        {{ field }}
+                    </div>
+                    {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% if field.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in field.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- Quick script to make django form inputs have bootstrap classes and proper date selectors -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const inputs = document.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (input.type !== 'checkbox' && input.type !== 'radio' && input.type !== 'submit') {
+                input.classList.add('form-control');
+            } else if (input.type === 'checkbox' || input.type === 'radio') {
+                input.classList.add('form-check-input');
+            }
+            
+            // Automatically assign date selectors to date fields
+            const name = input.name.toLowerCase();
+            if (name.includes('date') || name.includes('time')) {
+                // If it's a datetime field like match_date
+                if (name === 'match_date' || name.includes('time')) {
+                    input.setAttribute('type', 'datetime-local');
+                } else {
+                    input.setAttribute('type', 'date');
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

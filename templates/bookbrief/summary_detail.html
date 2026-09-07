@@ -1,0 +1,55 @@
+{% extends "bookbrief/bookbrief_base.html" %}
+{% block title %}{{ summary.get_summary_type_display }}: {{ summary.book.title }} – BookBrief{% endblock %}
+{% block meta_description %}<meta name="description" content="{{ summary.quick_preview|default:summary.content|truncatewords:30 }}">{% endblock %}
+{% block bookbrief_content %}
+<article class="summary-detail">
+    <p class="breadcrumb"><a href="{% url 'book_detail' summary.book.slug %}">{{ summary.book.title }}</a> → {{ summary.get_summary_type_display }}</p>
+    <h1>{{ summary.get_summary_type_display }}: {{ summary.book.title }}</h1>
+    <p class="meta">by {{ summary.user.username }} · {{ summary.estimated_reading_minutes }} min read · {{ summary.created_at|date }}</p>
+
+    <div class="summary-content prose">
+        {# Use |safe when storing Quill HTML; sanitize on backend (e.g. bleach). For plain text use linebreaks. #}
+        {{ summary.content|linebreaks }}
+    </div>
+    {% if summary.key_takeaways %}
+        <section class="key-takeaways">
+            <h2>Key takeaways</h2>
+            {{ summary.key_takeaways|linebreaks }}
+        </section>
+    {% endif %}
+
+    {% if user.is_authenticated and summary.user_id == user.id %}
+        <p class="summary-detail__actions">
+            <a href="{% url 'summary_edit' summary.pk %}" class="btn btn--secondary">Edit summary</a>
+            <a href="{% url 'summary_delete' summary.pk %}" class="btn btn--danger">Delete summary</a>
+        </p>
+    {% endif %}
+
+    <section class="comments">
+        <h2>Comments</h2>
+        {% for comment in comments %}
+            {% if not comment.parent %}
+                {% include "bookbrief/components/_comment.html" with comment=comment %}
+            {% endif %}
+        {% empty %}
+            <p class="empty-state">No comments yet.</p>
+        {% endfor %}
+        {% if user.is_authenticated %}
+            <div class="form-wrap form-wrap--inline">
+                <h3 class="form-wrap__title">Add a comment</h3>
+                <form method="post" action="{% url 'summary_detail' summary.pk %}" class="form form--light form--comment">
+                    {% csrf_token %}
+                    {% for field in comment_form %}
+                        {% include "bookbrief/components/_form_field.html" with field=field %}
+                    {% endfor %}
+                    <p class="form-actions">
+                        <button type="submit" class="btn btn--primary">Post comment</button>
+                    </p>
+                </form>
+            </div>
+        {% else %}
+            <p><a href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" class="btn btn--secondary">Log in to comment</a></p>
+        {% endif %}
+    </section>
+</article>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% load static %}
+<article class="card card-book">
+    {% if book.cover_image %}
+        <a href="{% url 'book_detail' book.slug %}" class="card-image-link">
+            <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="card-image">
+        </a>
+    {% endif %}
+    <div class="card-body">
+        <h3 class="card-title"><a href="{% url 'book_detail' book.slug %}">{{ book.title }}</a></h3>
+        <p class="meta">by {{ book.author }}{% if book.category %} · {{ book.category.name }}{% endif %}</p>
+        {% if book.summary_count is not None %}
+            <p class="excerpt">{{ book.summary_count }} summar{{ book.summary_count|pluralize:"y,ies" }}</p>
+        {% endif %}
+        {% if book.average_rating %}
+            <p class="rating">★ {{ book.average_rating }} ({{ book.reviews_count }} review{{ book.reviews_count|pluralize }})</p>
+        {% endif %}
+        <a href="{% url 'book_detail' book.slug %}" class="card-link">View details →</a>
+    </div>
+</article>
