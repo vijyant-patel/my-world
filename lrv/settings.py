@@ -66,16 +66,14 @@ TEMPLATES = [
 
 # Database: set DATABASE_URL for PostgreSQL (use dj-database-url); else SQLite for dev
 DATABASES = {
-    "default":  {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "neondb",
-        "USER": "neondb_owner",
-        "PASSWORD": "npg_Lq0XSBecQV1J",
-        "HOST": "ep-silent-breeze-ae8f7got-pooler.c-2.us-east-2.aws.neon.tech",
-        "PORT": "5432",
-        "OPTIONS": {
-            "sslmode": "require",
-        }}
+    "default": {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'lrv',  # Database name
+        'USER': 'postgres',
+        'PASSWORD': 'root',
+        'HOST': 'localhost',
+        'PORT': '5432',  # Use default port for PostgreSQL
+    }
     # "default": {
     #     "ENGINE": "django.db.backends.sqlite3",
     #     "NAME": BASE_DIR / "db.sqlite3",
