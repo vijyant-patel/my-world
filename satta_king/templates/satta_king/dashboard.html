@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satta King Predictor</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1e1e2f; color: #d4d4dc; margin: 0; padding: 20px; }
+        h1, h2 { text-align: center; color: #00d2ff; margin-bottom: 20px;}
+        .container { max-width: 1400px; margin: auto; }
+        .card { background: #2a2a40; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #3f3f5a; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        form { display: flex; flex-direction: column; gap: 15px; }
+        label { font-weight: bold; color: #a0a0b0; }
+        select, input { background: #1e1e2f; color: #fff; padding: 10px; border: 1px solid #3f3f5a; border-radius: 4px; font-size: 16px; }
+        button { background: #00d2ff; color: #1e1e2f; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        button:hover { background: #00b8e6; }
+        
+        .val-table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 14px; text-align: center; margin-top: 15px;}
+        .val-table th, .val-table td { border: 1px solid #3f3f5a; padding: 6px; }
+        .val-table th { background: #3f3f5a; color: #fff; }
+        .val-table td { color: #d4d4dc; }
+        
+        /* Column Dividers */
+        .divider-left { border-left: 3px solid #6c5ce7 !important; }
+        
+        .text-success { color: #00ff88; font-weight: bold; }
+        .text-danger { color: #ff3366; font-weight: bold; }
+
+        .pred-box { background: #3f3f5a; padding: 15px; border-left: 5px solid #00d2ff; margin-top: 10px; border-radius: 4px; }
+        .pred-title { font-weight: bold; color: #00d2ff; margin-bottom: 10px; font-size: 1.1em;}
+        .row-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;}
+        .row-form > div { flex: 1; min-width: 150px; }
+        
+        .index-link { color: #00d2ff; text-decoration: underline; cursor: pointer; }
+
+        /* Modal Styles */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); }
+        .modal-content { background-color: #2a2a40; margin: 10% auto; padding: 20px; border: 1px solid #3f3f5a; width: 80%; border-radius: 8px; color: #fff; }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover { color: #fff; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="{% url 'home' %}" style="color: #00d2ff; text-decoration: none;">&larr; Back to ERP</a>
+    <h1>🎲 Satta King Predictor</h1>
+
+    <div class="grid">
+        <!-- Settings Form -->
+        <div class="card">
+            <h2>Algorithm Settings</h2>
+            <form method="GET" class="row-form">
+                <input type="hidden" name="run_prediction" value="true">
+                <div>
+                    <label>Model Type</label>
+                    <select name="model_type" style="width: 100%;">
+                        <option value="HEURISTIC" {% if model_type == 'HEURISTIC' %}selected{% endif %}>Heuristics (Fast)</option>
+                        <option value="ML" {% if model_type == 'ML' %}selected{% endif %}>Random Forest (ML)</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Numbers (e.g. 53)</label>
+                    <input type="number" name="predict_count" value="{{ predict_count }}" style="width: 100%;">
+                </div>
+                <div>
+                    <label>Tens/Ones (e.g. 5)</label>
+                    <input type="number" name="tens_ones_count" value="{{ tens_ones_count }}" style="width: 100%;">
+                </div>
+                <div>
+                    <label>Validation Rows</label>
+                    <input type="number" name="validation_rows" value="{{ validation_rows }}" style="width: 100%;">
+                </div>
+                <div>
+                    <button type="submit" style="width: 100%;">Run Prediction</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Add Data Form -->
+        <div class="card">
+            <h2>Add Daily Entry</h2>
+            <form method="POST" class="row-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_number">
+                <div>
+                    <label>Index</label>
+                    <input type="number" name="index_num" value="{{ next_index }}" required style="width: 100%;">
+                </div>
+                <div>
+                    <label>Category</label>
+                    <select name="category" required style="width: 100%;">
+                        {% for cat in categories %}
+                        <option value="{{ cat }}">{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>Number (0-99)</label>
+                    <input type="number" name="number" min="0" max="99" required style="width: 100%;">
+                </div>
+                <div>
+                    <button type="submit" style="width: 100%;">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if request.GET.run_prediction == 'true' %}
+    <!-- Future Predictions -->
+    <div class="card">
+        <h2>🔮 FINAL NEXT PREDICTION</h2>
+        <div class="grid">
+            {% for cat, preds in predictions.items %}
+            {% if preds %}
+            <div class="pred-box">
+                <div class="pred-title" style="display: flex; justify-content: space-between;">
+                    <span>{{ cat }}</span>
+                    <span style="font-size: 0.8em; color: #a0a0b0; font-weight: normal;">
+                        Moti: {{ preds.moti }} | Last: {{ preds.last }}
+                    </span>
+                </div>
+                <div><strong>Predicted (Top {{ predict_count }}):</strong> <span class="text-success">{{ preds.num|join:", " }}</span></div>
+                <div style="margin-top: 5px;"><strong>Remaining ({{ preds.rem|length }}):</strong> <span class="text-danger" style="font-size: 0.9em;">{{ preds.rem|join:", " }}</span></div>
+                <div style="margin-top: 5px;"><strong>Tens:</strong> {{ preds.ten|join:", " }}</div>
+                <div style="margin-top: 5px;"><strong>Ones:</strong> {{ preds.one|join:", " }}</div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Validation Table -->
+    <div class="card" style="overflow-x: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="margin: 0;">PREVIOUS DATA VALIDATION</h2>
+            <div>
+                <button onclick="toggleTensOnes()" id="toggleBtn" style="padding: 5px 10px; font-size: 14px;">Show Tens & Ones</button>
+                <button onclick="highlightDuplicates()" style="padding: 5px 10px; font-size: 14px; margin-left: 10px; background: #6c5ce7; color: white; border: none; border-radius: 4px; cursor: pointer;">Column Overlaps</button>
+                <button onclick="highlightRowMatches()" style="padding: 5px 10px; font-size: 14px; margin-left: 10px; background: #00cec9; color: white; border: none; border-radius: 4px; cursor: pointer;">Row Matches</button>
+                <button onclick="highlightRowOpposites()" style="padding: 5px 10px; font-size: 14px; margin-left: 10px; background: #e17055; color: white; border: none; border-radius: 4px; cursor: pointer;">Row Opposites</button>
+            </div>
+        </div>
+        <table class="val-table">
+            <thead>
+                <tr>
+                    <th rowspan="2">INDEX</th>
+                    <th colspan="6" class="divider-left">ACTUAL</th>
+                    <th colspan="6" class="divider-left">NUMBER</th>
+                    <th colspan="6" class="divider-left tens-col" style="display: none;">TENS</th>
+                    <th colspan="6" class="divider-left ones-col" style="display: none;">ONES</th>
+                </tr>
+                <tr>
+                    {% for cat in categories %}<th {% if forloop.first %}class="divider-left"{% endif %}>{{ cat }}</th>{% endfor %}
+                    {% for cat in categories %}<th {% if forloop.first %}class="divider-left"{% endif %}>{{ cat }}</th>{% endfor %}
+                    {% for cat in categories %}<th class="tens-col {% if forloop.first %}divider-left{% endif %}" style="display: none;">{{ cat }}</th>{% endfor %}
+                    {% for cat in categories %}<th class="ones-col {% if forloop.first %}divider-left{% endif %}" style="display: none;">{{ cat }}</th>{% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in validation_data %}
+                <tr>
+                    <td><span class="index-link" onclick='openModal("{{ row.index }}", {{ row.preds_json|safe }})'><strong>{{ row.index }}</strong></span></td>
+                    
+                    <!-- ACTUAL -->
+                    {% for cat in categories %}
+                    <td class="{% if forloop.first %}divider-left{% endif %}">
+                        {% for c, val in row.actuals.items %}
+                            {% if c == cat %}
+                                <span class="actual-num" data-val="{{ val }}">{{ val }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    {% endfor %}
+
+                    <!-- NUMBER -->
+                    {% for cat in categories %}
+                    <td {% if forloop.first %}class="divider-left"{% endif %}>
+                        {% for c, val in row.num_oks.items %}
+                            {% if c == cat %}
+                                {% if val == '✔' %}<span class="text-success">{{ val }}</span>
+                                {% elif val == '✘' %}<span class="text-danger">{{ val }}</span>
+                                {% else %}{{ val }}{% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    {% endfor %}
+
+                    <!-- TENS -->
+                    {% for cat in categories %}
+                    <td class="tens-col {% if forloop.first %}divider-left{% endif %}" style="display: none;">
+                        {% for c, val in row.ten_oks.items %}
+                            {% if c == cat %}
+                                {% if val == '✔' %}<span class="text-success">{{ val }}</span>
+                                {% elif val == '✘' %}<span class="text-danger">{{ val }}</span>
+                                {% else %}{{ val }}{% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    {% endfor %}
+
+                    <!-- ONES -->
+                    {% for cat in categories %}
+                    <td class="ones-col {% if forloop.first %}divider-left{% endif %}" style="display: none;">
+                        {% for c, val in row.one_oks.items %}
+                            {% if c == cat %}
+                                {% if val == '✔' %}<span class="text-success">{{ val }}</span>
+                                {% elif val == '✘' %}<span class="text-danger">{{ val }}</span>
+                                {% else %}{{ val }}{% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% empty %}
+                <tr><td colspan="25">No data available.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Modal -->
+<div id="predModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <h2 id="modalTitle">Predictions at Index</h2>
+    <div id="modalBody" class="grid"></div>
+  </div>
+</div>
+
+<script>
+    var modal = document.getElementById("predModal");
+    
+    function openModal(index, preds) {
+        document.getElementById("modalTitle").innerText = "Predictions at Index " + index;
+        var body = document.getElementById("modalBody");
+        body.innerHTML = "";
+        
+        for (var cat in preds) {
+            var arr = preds[cat];
+            if (arr && arr.length > 0) {
+                var remArr = [];
+                for(var i=0; i<100; i++) {
+                    if(!arr.includes(i)) remArr.push(i);
+                }
+                var div = document.createElement("div");
+                div.className = "pred-box";
+                div.innerHTML = "<div class='pred-title'>" + cat + "</div><div><strong>Predicted:</strong> <span class='text-success'>" + arr.join(", ") + "</span></div><div style='margin-top:5px;'><strong>Remaining (" + remArr.length + "):</strong> <span class='text-danger' style='font-size:0.9em;'>" + remArr.join(", ") + "</span></div>";
+                body.appendChild(div);
+            }
+        }
+        
+        modal.style.display = "block";
+    }
+    
+    function closeModal() {
+        modal.style.display = "none";
+    }
+    
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+    
+    function toggleTensOnes() {
+        var tens = document.querySelectorAll('.tens-col');
+        var ones = document.querySelectorAll('.ones-col');
+        var btn = document.getElementById('toggleBtn');
+        var isHidden = tens[0].style.display === 'none';
+        
+        tens.forEach(function(el) { el.style.display = isHidden ? '' : 'none'; });
+        ones.forEach(function(el) { el.style.display = isHidden ? '' : 'none'; });
+        
+        btn.innerText = isHidden ? "Hide Tens & Ones" : "Show Tens & Ones";
+    }
+
+    var isHighlighted = false;
+    function highlightDuplicates() {
+        var tbody = document.querySelector('.val-table tbody');
+        var rows = tbody.querySelectorAll('tr');
+        
+        if (isHighlighted) {
+            // Remove highlights
+            rows.forEach(function(row) {
+                var cells = row.querySelectorAll('td');
+                cells.forEach(function(cell) {
+                    cell.style.backgroundColor = ''; // Remove td background
+                });
+            });
+            isHighlighted = false;
+            document.querySelector("button[onclick='highlightDuplicates()']").innerText = "Highlight Overlaps";
+            return;
+        }
+
+        // Apply highlights by scanning columns 7 to 24
+        // ACTUAL is cells 1-6, NUMBER is 7-12, TENS is 13-18, ONES is 19-24
+        
+        for (var col = 7; col <= 24; col++) {
+            var streak = [];
+            var currentSymbol = null;
+            
+            function applyStreak() {
+                if (streak.length >= 2 && currentSymbol !== '-' && currentSymbol !== null) {
+                    streak.forEach(function(cell) {
+                        if (currentSymbol === '✔') {
+                            cell.style.backgroundColor = '#1a5938'; // Dark green background for winning streak
+                        } else if (currentSymbol === '✘') {
+                            cell.style.backgroundColor = '#5c2230'; // Dark red background for losing streak
+                        }
+                    });
+                }
+            }
+
+            for (var r = 0; r < rows.length; r++) {
+                var cell = rows[r].cells[col];
+                if (!cell) continue;
+                
+                var span = cell.querySelector('span.text-success') || cell.querySelector('span.text-danger');
+                var symbol = span ? span.innerText.trim() : (cell.innerText.trim() === '-' ? '-' : null);
+                
+                if (symbol === currentSymbol && symbol !== null) {
+                    streak.push(cell);
+                } else {
+                    applyStreak();
+                    streak = [cell];
+                    currentSymbol = symbol;
+                }
+            }
+            applyStreak(); // Check end of column
+        }
+        
+        isHighlighted = true;
+        document.querySelector("button[onclick='highlightDuplicates()']").innerText = "Remove Column Overlaps";
+    }
+
+    var isRowHighlighted = false;
+    function highlightRowMatches() {
+        var tbody = document.querySelector('.val-table tbody');
+        var rows = tbody.querySelectorAll('tr');
+        var btn = document.querySelector("button[onclick='highlightRowMatches()']");
+
+        if (isRowHighlighted) {
+            // Remove highlights
+            rows.forEach(function(row) {
+                var cells = row.querySelectorAll('td');
+                cells.forEach(function(cell) {
+                    // Only clear if it was highlighted by this function (we used a specific color)
+                    if (cell.style.backgroundColor === 'rgb(0, 139, 139)' || cell.style.backgroundColor === '#008b8b') {
+                        cell.style.backgroundColor = '';
+                    }
+                });
+            });
+            isRowHighlighted = false;
+            btn.innerText = "Row Matches";
+            return;
+        }
+
+        // We check sections independently: NUMBER (7-12), TENS (13-18), ONES (19-24)
+        var sections = [
+            {start: 7, end: 12},
+            {start: 13, end: 18},
+            {start: 19, end: 24}
+        ];
+
+        for (var i = 0; i < rows.length - 1; i++) {
+            var row1 = rows[i];
+            var row2 = rows[i+1];
+            
+            sections.forEach(function(sec) {
+                var match = true;
+                var hasValidData = false;
+                
+                for (var col = sec.start; col <= sec.end; col++) {
+                    var cell1 = row1.cells[col];
+                    var cell2 = row2.cells[col];
+                    if (!cell1 || !cell2) { match = false; break; }
+                    
+                    var span1 = cell1.querySelector('span.text-success') || cell1.querySelector('span.text-danger');
+                    var span2 = cell2.querySelector('span.text-success') || cell2.querySelector('span.text-danger');
+                    
+                    var sym1 = span1 ? span1.innerText.trim() : cell1.innerText.trim();
+                    var sym2 = span2 ? span2.innerText.trim() : cell2.innerText.trim();
+                    
+                    if (sym1 !== '-' && sym1 !== 'None') hasValidData = true;
+                    
+                    if (sym1 !== sym2) {
+                        match = false;
+                        break;
+                    }
+                }
+                
+                // If entire section matches exactly and has actual data
+                if (match && hasValidData) {
+                    for (var col = sec.start; col <= sec.end; col++) {
+                        row1.cells[col].style.backgroundColor = '#008b8b'; // Dark Cyan
+                        row2.cells[col].style.backgroundColor = '#008b8b';
+                    }
+                }
+            });
+        }
+        
+        isRowHighlighted = true;
+        btn.innerText = "Remove Row Matches";
+    }
+
+    var isOppositeHighlighted = false;
+    function highlightRowOpposites() {
+        var tbody = document.querySelector('.val-table tbody');
+        var rows = tbody.querySelectorAll('tr');
+        var btn = document.querySelector("button[onclick='highlightRowOpposites()']");
+
+        if (isOppositeHighlighted) {
+            rows.forEach(function(row) {
+                var cells = row.querySelectorAll('td');
+                cells.forEach(function(cell) {
+                    if (cell.style.backgroundColor === 'rgb(186, 68, 41)' || cell.style.backgroundColor === '#ba4429') {
+                        cell.style.backgroundColor = '';
+                    }
+                });
+            });
+            isOppositeHighlighted = false;
+            btn.innerText = "Row Opposites";
+            return;
+        }
+
+        var sections = [
+            {start: 7, end: 12},
+            {start: 13, end: 18},
+            {start: 19, end: 24}
+        ];
+
+        for (var i = 0; i < rows.length - 1; i++) {
+            var row1 = rows[i];
+            var row2 = rows[i+1];
+            
+            sections.forEach(function(sec) {
+                var completelyDifferent = true;
+                var hasValidData = false;
+                
+                for (var col = sec.start; col <= sec.end; col++) {
+                    var cell1 = row1.cells[col];
+                    var cell2 = row2.cells[col];
+                    if (!cell1 || !cell2) { completelyDifferent = false; break; }
+                    
+                    var span1 = cell1.querySelector('span.text-success') || cell1.querySelector('span.text-danger');
+                    var span2 = cell2.querySelector('span.text-success') || cell2.querySelector('span.text-danger');
+                    
+                    var sym1 = span1 ? span1.innerText.trim() : cell1.innerText.trim();
+                    var sym2 = span2 ? span2.innerText.trim() : cell2.innerText.trim();
+                    
+                    if (sym1 !== '-' && sym1 !== 'None' && sym2 !== '-' && sym2 !== 'None') {
+                        hasValidData = true;
+                        if (sym1 === sym2) {
+                            completelyDifferent = false;
+                            break;
+                        }
+                    } else {
+                        completelyDifferent = false; // Ignore columns with no data
+                        break;
+                    }
+                }
+                
+                if (completelyDifferent && hasValidData) {
+                    for (var col = sec.start; col <= sec.end; col++) {
+                        row1.cells[col].style.backgroundColor = '#ba4429'; // Dark orange-red
+                        row2.cells[col].style.backgroundColor = '#ba4429';
+                    }
+                }
+            });
+        }
+        
+        isOppositeHighlighted = true;
+        btn.innerText = "Remove Row Opposites";
+    }
+</script>
+
+</body>
+</html>

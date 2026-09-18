@@ -28,6 +28,7 @@ def dummy_view(request):
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/users/", include("apps.users.urls")),
+    path("satta/", include("satta_king.urls")),
     path("api/loans/", include("apps.loans.urls")),
     path("api/repayments/", include("apps.repayments.urls")),
     path("interviews/", include("apps.interviews.urls", namespace="interviews")),
