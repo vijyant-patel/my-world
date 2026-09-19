@@ -132,16 +132,18 @@
     </div>
 
     <!-- Validation Table -->
-    <div class="card" style="overflow-x: auto;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; position: sticky; top: 0; background: #2a2a40; padding: 10px 0; z-index: 10; border-bottom: 1px solid #3f3f5a;">
             <h2 style="margin: 0;">PREVIOUS DATA VALIDATION</h2>
             <div>
                 <button onclick="toggleTensOnes()" id="toggleBtn" style="padding: 5px 10px; font-size: 14px;">Show Tens & Ones</button>
+                <button onclick="highlightStreakBorders()" style="padding: 5px 10px; font-size: 14px; margin-left: 10px; background: #00b894; color: white; border: none; border-radius: 4px; cursor: pointer;">Streak Borders</button>
                 <button onclick="highlightDuplicates()" style="padding: 5px 10px; font-size: 14px; margin-left: 10px; background: #6c5ce7; color: white; border: none; border-radius: 4px; cursor: pointer;">Column Overlaps</button>
                 <button onclick="highlightRowMatches()" style="padding: 5px 10px; font-size: 14px; margin-left: 10px; background: #00cec9; color: white; border: none; border-radius: 4px; cursor: pointer;">Row Matches</button>
                 <button onclick="highlightRowOpposites()" style="padding: 5px 10px; font-size: 14px; margin-left: 10px; background: #e17055; color: white; border: none; border-radius: 4px; cursor: pointer;">Row Opposites</button>
             </div>
         </div>
+        <div style="overflow-x: auto;">
         <table class="val-table">
             <thead>
                 <tr>
@@ -218,6 +220,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
     </div>
     {% endif %}
 
@@ -476,6 +479,78 @@
         
         isOppositeHighlighted = true;
         btn.innerText = "Remove Row Opposites";
+    }
+
+    var isStreakBordersOn = false;
+    function highlightStreakBorders() {
+        var tbody = document.querySelector('.val-table tbody');
+        var rows = tbody.querySelectorAll('tr');
+        var btn = document.querySelector("button[onclick='highlightStreakBorders()']");
+
+        if (isStreakBordersOn) {
+            for (var col = 7; col <= 24; col++) {
+                for (var r = 0; r < rows.length; r++) {
+                    var cell = rows[r].cells[col];
+                    if (cell) {
+                        cell.style.border = '';
+                        cell.style.borderTop = '';
+                        cell.style.borderBottom = '';
+                        cell.style.borderLeft = '';
+                        cell.style.borderRight = '';
+                        cell.style.backgroundColor = '';
+                    }
+                }
+            }
+            isStreakBordersOn = false;
+            btn.innerText = "Streak Borders";
+            return;
+        }
+
+        for (var col = 7; col <= 24; col++) {
+            for (var r = 0; r < rows.length; r++) {
+                var cell = rows[r].cells[col];
+                if (!cell) continue;
+
+                var span = cell.querySelector('span.text-success') || cell.querySelector('span.text-danger');
+                var val = span ? span.innerText.trim() : cell.innerText.trim();
+                
+                if (val === '-' || val === 'None' || val === '') continue;
+
+                var prevCell = (r > 0) ? rows[r-1].cells[col] : null;
+                var nextCell = (r < rows.length - 1) ? rows[r+1].cells[col] : null;
+
+                var prevSpan = prevCell ? (prevCell.querySelector('span.text-success') || prevCell.querySelector('span.text-danger')) : null;
+                var nextSpan = nextCell ? (nextCell.querySelector('span.text-success') || nextCell.querySelector('span.text-danger')) : null;
+
+                var prevVal = prevSpan ? prevSpan.innerText.trim() : (prevCell ? prevCell.innerText.trim() : null);
+                var nextVal = nextSpan ? nextSpan.innerText.trim() : (nextCell ? nextCell.innerText.trim() : null);
+
+                var borderColor = val.includes('✔') ? '#00b894' : '#e17055';
+                var bgColor = val.includes('✔') ? 'rgba(0, 184, 148, 0.15)' : 'rgba(225, 112, 85, 0.15)';
+
+                // Ensure !important is not needed by using inline styles directly
+                cell.style.borderLeft = '2px solid ' + borderColor;
+                cell.style.borderRight = '2px solid ' + borderColor;
+                cell.style.backgroundColor = bgColor;
+
+                // Box start (top)
+                if (val !== prevVal) {
+                    cell.style.borderTop = '3px solid ' + borderColor;
+                } else {
+                    cell.style.borderTop = '1px solid transparent';
+                }
+
+                // Box end (bottom)
+                if (val !== nextVal) {
+                    cell.style.borderBottom = '3px solid ' + borderColor;
+                } else {
+                    cell.style.borderBottom = '1px solid transparent';
+                }
+            }
+        }
+        
+        isStreakBordersOn = true;
+        btn.innerText = "Remove Borders";
     }
 </script>
 
