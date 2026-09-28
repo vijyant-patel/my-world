@@ -77,11 +77,11 @@ def dashboard(request):
                         preds_ten = predict_heuristic_digits([get_tens(x) for x in history], count=tens_ones_count)
                         preds_one = predict_heuristic_digits([get_ones(x) for x in history], count=tens_ones_count)
 
-                    row['actuals'][cat] = actual
+                    row['actuals'][cat] = f"{actual:02d}"
                     row['num_oks'][cat] = "✔" if actual in preds_num else "✘"
                     row['ten_oks'][cat] = "✔" if get_tens(actual) in preds_ten else "✘"
                     row['one_oks'][cat] = "✔" if get_ones(actual) in preds_one else "✘"
-                    row['preds'][cat] = sorted(preds_num)
+                    row['preds'][cat] = [f"{x:02d}" for x in sorted(preds_num)]
                 else:
                     row['actuals'][cat] = actual if actual is not None else "-"
                     row['num_oks'][cat] = "-"
@@ -108,8 +108,8 @@ def dashboard(request):
                     p_one = predict_heuristic_digits([get_ones(x) for x in records], count=tens_ones_count)
                 rem_num = [x for x in range(100) if x not in p_num]
                 predictions[cat] = {
-                    'num': sorted(p_num),
-                    'rem': sorted(rem_num),
+                    'num': [f"{x:02d}" for x in sorted(p_num)],
+                    'rem': [f"{x:02d}" for x in sorted(rem_num)],
                     'ten': sorted(p_ten),
                     'one': sorted(p_one),
                     'moti': timings[cat]['moti'],
