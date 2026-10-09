@@ -171,6 +171,7 @@
                 <div class="dropdown">
                     <button onclick="toggleDropdown('analysisDropdown')" style="padding: 5px 10px; font-size: 14px; background: #6c5ce7; color: white; border: none; border-radius: 4px; cursor: pointer;">Analysis Tools ▼</button>
                     <div id="analysisDropdown" class="dropdown-content">
+                        <button onclick="highlightHighLow()" style="color: #27ae60;">High / Low (>50)</button>
                         <button onclick="highlightOddEven()" style="color: #0984e3;">Odd / Even Highlighter</button>
                         <button onclick="highlightHotCold()" style="color: #e74c3c;">Hot & Cold Numbers</button>
                         <button onclick="highlightSleeping()" style="color: #9b59b6;">Sleeping Numbers</button>
@@ -673,6 +674,53 @@
         });
         isOddEvenOn = true;
         btn.innerText = "Remove Odd / Even";
+    }
+
+    // High / Low Highlighter
+    var isHighLowOn = false;
+    function highlightHighLow() {
+        var elements = document.querySelectorAll('.actual-num');
+        var btn = document.querySelector("button[onclick='highlightHighLow()']");
+        
+        if (isHighLowOn) {
+            elements.forEach(function(el) {
+                el.style.backgroundColor = '';
+                el.style.color = '';
+                el.style.border = '';
+                el.style.padding = '';
+                el.style.borderRadius = '';
+                el.innerText = el.getAttribute('data-val');
+            });
+            isHighLowOn = false;
+            btn.innerText = "High / Low (>50)";
+            return;
+        }
+
+        elements.forEach(function(el) {
+            var val = el.getAttribute('data-val');
+            if (val && val !== '-' && val !== 'None') {
+                var num = parseInt(val, 10);
+                if (!isNaN(num)) {
+                    if (num >= 50) {
+                        el.style.backgroundColor = 'rgba(39, 174, 96, 0.2)';
+                        el.style.color = '#2ecc71';
+                        el.style.border = '1px solid #27ae60';
+                        el.innerText = val + ' (H)';
+                    } else {
+                        el.style.backgroundColor = 'rgba(230, 126, 34, 0.2)';
+                        el.style.color = '#e67e22';
+                        el.style.border = '1px solid #d35400';
+                        el.innerText = val + ' (L)';
+                    }
+                    el.style.borderRadius = '4px';
+                    el.style.padding = '2px 4px';
+                    el.style.display = 'inline-block';
+                    el.style.fontWeight = 'bold';
+                }
+            }
+        });
+        isHighLowOn = true;
+        btn.innerText = "Remove High / Low";
     }
 
     // Hot & Cold Numbers
