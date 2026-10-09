@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Satta King Predictor</title>
+    <title>Inventory</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1e1e2f; color: #d4d4dc; margin: 0; padding: 20px; }
         h1, h2 { text-align: center; color: #00d2ff; margin-bottom: 20px;}
@@ -39,13 +39,20 @@
         .modal-content { background-color: #2a2a40; margin: 10% auto; padding: 20px; border: 1px solid #3f3f5a; width: 80%; border-radius: 8px; color: #fff; }
         .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
         .close:hover { color: #fff; }
+        /* Dropdown Styles */
+        .dropdown { position: relative; display: inline-block; margin-left: 10px; }
+        .dropdown-content { display: none; position: absolute; right: 0; background-color: #2a2a40; min-width: 200px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5); z-index: 101; border: 1px solid #3f3f5a; border-radius: 4px; }
+        .dropdown-content button { width: 100%; text-align: left; background: none; border-radius: 0; padding: 12px 16px; margin: 0; border-bottom: 1px solid #3f3f5a; }
+        .dropdown-content button:last-child { border-bottom: none; }
+        .dropdown-content button:hover { background-color: #3f3f5a; }
+        .show-dropdown { display: block; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <a href="{% url 'home' %}" style="color: #00d2ff; text-decoration: none;">&larr; Back to ERP</a>
-    <h1>🎲 Satta King Predictor</h1>
+    <h1>🎲 Inventory Predictor</h1>
 
     <div class="grid">
         <!-- Settings Form -->
@@ -131,20 +138,68 @@
         </div>
     </div>
 
+    <!-- AI Recommendation Engine -->
+    <div class="card" id="ai-recommendation-box" style="border: 2px solid #6c5ce7; background: rgba(108, 92, 231, 0.1);">
+        <h2 style="color: #a29bfe; margin-top: 0;">💡 AI Strategy Recommender</h2>
+        <div id="ai-suggestion-text" style="font-size: 16px; line-height: 1.5; margin-bottom: 15px;">
+            Analyzing historical data to find the safest progression strategy...
+        </div>
+        <div id="ai-stats-breakdown" class="grid" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; font-size: 14px;">
+            <!-- Stats will be populated by JS -->
+        </div>
+    </div>
+
+    <!-- Accuracy Meter -->
+    <div class="card">
+        <h2>Algorithm Win Rates (Accuracy)</h2>
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+            {% for cat, rate in win_rates.items %}
+            <div class="pred-box" style="text-align: center; border-left: 5px solid {% if rate >= 60 %}#00ff88{% elif rate >= 40 %}#f39c12{% else %}#ff3366{% endif %};">
+                <div class="pred-title">{{ cat }}</div>
+                <div style="font-size: 24px; font-weight: bold; color: {% if rate >= 60 %}#00ff88{% elif rate >= 40 %}#f39c12{% else %}#ff3366{% endif %};">{{ rate }}%</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
     <!-- Validation Table -->
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; position: sticky; top: 0; background: #2a2a40; padding: 10px 0; z-index: 10; border-bottom: 1px solid #3f3f5a;">
             <h2 style="margin: 0;">PREVIOUS DATA VALIDATION</h2>
             <div>
                 <button onclick="toggleTensOnes()" id="toggleBtn" style="padding: 5px 10px; font-size: 14px;">Show Tens & Ones</button>
-                <button onclick="highlightStreakIcons()" style="padding: 5px 10px; font-size: 14px; margin-left: 10px; background: #00b894; color: white; border: none; border-radius: 4px; cursor: pointer;">Streak Icons</button>
-                <button onclick="highlightDuplicates()" style="padding: 5px 10px; font-size: 14px; margin-left: 10px; background: #6c5ce7; color: white; border: none; border-radius: 4px; cursor: pointer;">Column Overlaps</button>
-                <button onclick="highlightRowMatches()" style="padding: 5px 10px; font-size: 14px; margin-left: 10px; background: #00cec9; color: white; border: none; border-radius: 4px; cursor: pointer;">Row Matches</button>
-                <button onclick="highlightRowOpposites()" style="padding: 5px 10px; font-size: 14px; margin-left: 10px; background: #e17055; color: white; border: none; border-radius: 4px; cursor: pointer;">Row Opposites</button>
+                <div class="dropdown">
+                    <button onclick="toggleDropdown('analysisDropdown')" style="padding: 5px 10px; font-size: 14px; background: #6c5ce7; color: white; border: none; border-radius: 4px; cursor: pointer;">Analysis Tools ▼</button>
+                    <div id="analysisDropdown" class="dropdown-content">
+                        <button onclick="highlightOddEven()" style="color: #0984e3;">Odd / Even Highlighter</button>
+                        <button onclick="highlightHotCold()" style="color: #e74c3c;">Hot & Cold Numbers</button>
+                        <button onclick="highlightSleeping()" style="color: #9b59b6;">Sleeping Numbers</button>
+                        <button onclick="highlightPalat()" style="color: #f1c40f;">Palat (Reverse) Matcher</button>
+                        <button onclick="highlightFamily()" style="color: #1abc9c;">Same Family (Rashi)</button>
+                        <button onclick="toggleProgression('chrono')" style="color: #fdcb6e;">Progression: All Markets</button>
+                        <button onclick="toggleProgression('market')" style="color: #e84393;">Progression: Market-Wise</button>
+                        <button onclick="highlightStreakIcons()" style="color: #00b894;">Streak Icons</button>
+                        <button onclick="highlightDuplicates()" style="color: #a29bfe;">Column Overlaps</button>
+                        <button onclick="highlightRowMatches()" style="color: #00cec9;">Row Matches</button>
+                        <button onclick="highlightRowOpposites()" style="color: #e17055;">Row Opposites</button>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <button onclick="toggleDropdown('patternDropdown')" style="padding: 5px 10px; font-size: 14px; background: #00cec9; color: white; border: none; border-radius: 4px; cursor: pointer;">A/B Patterns ▼</button>
+                    <div id="patternDropdown" class="dropdown-content">
+                        <button onclick="highlightPattern('AABB')" style="color: #dfe6e9;">AABB (✔✔✘✘)</button>
+                        <button onclick="highlightPattern('ABAB')" style="color: #dfe6e9;">ABAB (✔✘✔✘)</button>
+                        <button onclick="highlightPattern('AAAA')" style="color: #00b894;">AAAA (✔✔✔✔)</button>
+                        <button onclick="highlightPattern('BBBB')" style="color: #d63031;">BBBB (✘✘✘✘)</button>
+                        <button onclick="highlightPattern('AAAB')" style="color: #dfe6e9;">AAAB (✔✔✔✘)</button>
+                        <button onclick="highlightPattern('ABBA')" style="color: #dfe6e9;">ABBA (✔✘✘✔)</button>
+                        <button onclick="clearPatternHighlights()" style="color: #ff7675;">Clear Patterns</button>
+                    </div>
+                </div>
             </div>
         </div>
         <div style="overflow-x: auto;">
-        <table class="val-table">
+        <table class="val-table" id="valTable">
             <thead>
                 <tr>
                     <th rowspan="2">INDEX</th>
@@ -154,7 +209,17 @@
                     <th colspan="6" class="divider-left ones-col" style="display: none;">ONES</th>
                 </tr>
                 <tr>
-                    {% for cat in categories %}<th {% if forloop.first %}class="divider-left"{% endif %}>{{ cat }}</th>{% endfor %}
+                    {% for cat in categories %}
+                        <th 
+                            draggable="true" 
+                            ondragstart="dragStart(event, '{{ cat }}')" 
+                            ondragover="allowDrop(event)" 
+                            ondrop="drop(event, '{{ cat }}')"
+                            style="cursor: grab;"
+                            class="draggable-th {% if forloop.first %}divider-left{% endif %}">
+                            {{ cat }} ↕
+                        </th>
+                    {% endfor %}
                     {% for cat in categories %}<th {% if forloop.first %}class="divider-left"{% endif %}>{{ cat }}</th>{% endfor %}
                     {% for cat in categories %}<th class="tens-col {% if forloop.first %}divider-left{% endif %}" style="display: none;">{{ cat }}</th>{% endfor %}
                     {% for cat in categories %}<th class="ones-col {% if forloop.first %}divider-left{% endif %}" style="display: none;">{{ cat }}</th>{% endfor %}
@@ -265,11 +330,6 @@
         modal.style.display = "none";
     }
     
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = "none";
-        }
-    }
     
     function toggleTensOnes() {
         var tens = document.querySelectorAll('.tens-col');
@@ -541,6 +601,614 @@
         
         isStreakIconsOn = true;
         btn.innerText = "Remove Icons";
+    }
+
+    // Dropdown Toggle
+    function toggleDropdown(id) {
+        var dropdowns = document.getElementsByClassName("dropdown-content");
+        for (var i = 0; i < dropdowns.length; i++) {
+            if (dropdowns[i].id !== id) dropdowns[i].classList.remove('show-dropdown');
+        }
+        document.getElementById(id).classList.toggle("show-dropdown");
+    }
+
+    // Close dropdown if clicked outside
+    window.onclick = function(event) {
+        var modal = document.getElementById("predModal");
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+        if (!event.target.matches('.dropdown button')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show-dropdown')) {
+                    openDropdown.classList.remove('show-dropdown');
+                }
+            }
+        }
+    }
+
+    // Odd / Even Highlighter
+    var isOddEvenOn = false;
+    function highlightOddEven() {
+        var elements = document.querySelectorAll('.actual-num');
+        var btn = document.querySelector("button[onclick='highlightOddEven()']");
+        
+        if (isOddEvenOn) {
+            elements.forEach(function(el) {
+                el.style.backgroundColor = '';
+                el.style.color = '';
+                el.style.border = '';
+                el.style.padding = '';
+                el.style.borderRadius = '';
+                el.innerText = el.getAttribute('data-val');
+            });
+            isOddEvenOn = false;
+            btn.innerText = "Odd / Even Highlighter";
+            return;
+        }
+
+        elements.forEach(function(el) {
+            var val = el.getAttribute('data-val');
+            if (val && val !== '-' && val !== 'None') {
+                var num = parseInt(val, 10);
+                if (!isNaN(num)) {
+                    if (num % 2 === 0) {
+                        el.style.backgroundColor = 'rgba(9, 132, 227, 0.2)';
+                        el.style.color = '#74b9ff';
+                        el.style.border = '1px solid #0984e3';
+                        el.innerText = val + ' (E)';
+                    } else {
+                        el.style.backgroundColor = 'rgba(214, 48, 49, 0.2)';
+                        el.style.color = '#ff7675';
+                        el.style.border = '1px solid #d63031';
+                        el.innerText = val + ' (O)';
+                    }
+                    el.style.borderRadius = '4px';
+                    el.style.padding = '2px 4px';
+                    el.style.display = 'inline-block';
+                }
+            }
+        });
+        isOddEvenOn = true;
+        btn.innerText = "Remove Odd / Even";
+    }
+
+    // Hot & Cold Numbers
+    var isHotColdOn = false;
+    function highlightHotCold() {
+        var elements = document.querySelectorAll('.actual-num');
+        var btn = document.querySelector("button[onclick='highlightHotCold()']");
+        
+        if (isHotColdOn) {
+            elements.forEach(function(el) {
+                el.style.background = '';
+                el.style.color = '';
+                el.style.border = '';
+                el.style.padding = '';
+                el.style.borderRadius = '';
+                el.innerText = el.getAttribute('data-val');
+            });
+            isHotColdOn = false;
+            btn.innerText = "Hot & Cold Numbers";
+            return;
+        }
+
+        // Count frequencies in the visible table
+        var counts = {};
+        elements.forEach(function(el) {
+            var val = el.getAttribute('data-val');
+            if (val && val !== '-' && val !== 'None') {
+                counts[val] = (counts[val] || 0) + 1;
+            }
+        });
+
+        // Average frequency to determine hot/cold thresholds
+        var maxFreq = 0;
+        for (var k in counts) {
+            if (counts[k] > maxFreq) maxFreq = counts[k];
+        }
+        var hotThreshold = Math.max(2, Math.floor(maxFreq * 0.6)); // Top 40% frequent
+        var coldThreshold = 1; // Only appeared once or never
+
+        elements.forEach(function(el) {
+            var val = el.getAttribute('data-val');
+            if (val && counts[val]) {
+                var freq = counts[val];
+                if (freq >= hotThreshold) {
+                    el.style.background = 'linear-gradient(45deg, rgba(211, 84, 0, 0.4), rgba(192, 57, 43, 0.4))';
+                    el.style.color = '#ff9f43';
+                    el.style.border = '1px solid #e74c3c';
+                    el.innerText = '🔥 ' + val;
+                } else if (freq <= coldThreshold) {
+                    el.style.background = 'linear-gradient(45deg, rgba(41, 128, 185, 0.3), rgba(52, 152, 219, 0.3))';
+                    el.style.color = '#48dbfb';
+                    el.style.border = '1px solid #3498db';
+                    el.innerText = '❄️ ' + val;
+                }
+                
+                if (freq >= hotThreshold || freq <= coldThreshold) {
+                    el.style.borderRadius = '4px';
+                    el.style.padding = '2px 4px';
+                    el.style.display = 'inline-block';
+                    el.style.fontWeight = 'bold';
+                }
+            }
+        });
+        isHotColdOn = true;
+        btn.innerText = "Remove Hot & Cold";
+    }
+
+    // Sleeping Numbers
+    var isSleepingOn = false;
+    function highlightSleeping() {
+        var tbody = document.querySelector('.val-table tbody');
+        var rows = tbody.querySelectorAll('tr');
+        var btn = document.querySelector("button[onclick='highlightSleeping()']");
+        var elements = document.querySelectorAll('.actual-num');
+
+        if (isSleepingOn) {
+            elements.forEach(function(el) {
+                el.style.backgroundColor = '';
+                el.style.color = '';
+                el.style.border = '';
+                el.style.padding = '';
+                el.style.borderRadius = '';
+                el.innerText = el.getAttribute('data-val');
+            });
+            isSleepingOn = false;
+            btn.innerText = "Sleeping Numbers";
+            return;
+        }
+
+        for (var col = 1; col <= 6; col++) {
+            for (var r = 0; r < rows.length; r++) {
+                var cell = rows[r].cells[col];
+                if (!cell) continue;
+                var el = cell.querySelector('.actual-num');
+                if (!el) continue;
+                var val = el.getAttribute('data-val');
+                if (val === '-' || val === 'None' || !val) continue;
+
+                // Check preceding rows (physically below in the table since index goes 77, 76, 75)
+                // A sleeping number is one that hasn't appeared in the previous 20 rows
+                var found = false;
+                var checkLimit = Math.min(rows.length, r + 21);
+                for (var pr = r + 1; pr < checkLimit; pr++) {
+                    var pCell = rows[pr].cells[col];
+                    if (pCell) {
+                        var pEl = pCell.querySelector('.actual-num');
+                        if (pEl && pEl.getAttribute('data-val') === val) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!found && r + 21 <= rows.length) { // Only highlight if we actually have 20 rows of history to prove it
+                    el.style.backgroundColor = 'rgba(155, 89, 182, 0.3)';
+                    el.style.color = '#d2b4de';
+                    el.style.border = '1px solid #9b59b6';
+                    el.style.borderRadius = '4px';
+                    el.style.padding = '2px 4px';
+                    el.style.display = 'inline-block';
+                    el.style.fontWeight = 'bold';
+                    el.innerText = '💤 ' + val;
+                }
+            }
+        }
+        isSleepingOn = true;
+        btn.innerText = "Remove Sleeping";
+    }
+
+    // Palat Matcher
+    var isPalatOn = false;
+    function highlightPalat() {
+        var tbody = document.querySelector('.val-table tbody');
+        var rows = tbody.querySelectorAll('tr');
+        var btn = document.querySelector("button[onclick='highlightPalat()']");
+        var elements = document.querySelectorAll('.actual-num');
+
+        if (isPalatOn) {
+            elements.forEach(function(el) {
+                el.style.backgroundColor = '';
+                el.style.color = '';
+                el.style.border = '';
+                el.style.padding = '';
+                el.style.borderRadius = '';
+                el.innerText = el.getAttribute('data-val');
+            });
+            isPalatOn = false;
+            btn.innerText = "Palat (Reverse) Matcher";
+            return;
+        }
+
+        var palatFound = new Set();
+        
+        for (var r = 0; r < rows.length; r++) {
+            for (var col = 1; col <= 6; col++) {
+                var cell = rows[r].cells[col];
+                if (!cell) continue;
+                var el = cell.querySelector('.actual-num');
+                if (!el) continue;
+                var val = el.getAttribute('data-val');
+                if (val === '-' || val === 'None' || val.length !== 2) continue;
+
+                var palatVal = val[1] + val[0];
+                if (val === palatVal) continue; // Skip numbers like 11, 22
+
+                // Check 2 rows above and 2 rows below in all columns
+                for (var searchR = Math.max(0, r - 2); searchR <= Math.min(rows.length - 1, r + 2); searchR++) {
+                    for (var searchC = 1; searchC <= 6; searchC++) {
+                        if (searchR === r && searchC === col) continue; // Skip self
+                        var sCell = rows[searchR].cells[searchC];
+                        if (sCell) {
+                            var sEl = sCell.querySelector('.actual-num');
+                            if (sEl && sEl.getAttribute('data-val') === palatVal) {
+                                palatFound.add(el);
+                                palatFound.add(sEl);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        palatFound.forEach(function(el) {
+            el.style.backgroundColor = 'rgba(241, 196, 15, 0.2)';
+            el.style.color = '#f1c40f';
+            el.style.border = '1px solid #f39c12';
+            el.style.borderRadius = '4px';
+            el.style.padding = '2px 4px';
+            el.style.display = 'inline-block';
+            el.style.fontWeight = 'bold';
+            el.innerText = '🔁 ' + el.getAttribute('data-val');
+        });
+
+        isPalatOn = true;
+        btn.innerText = "Remove Palat";
+    }
+
+    // Family Trend
+    var isFamilyOn = false;
+    function highlightFamily() {
+        var tbody = document.querySelector('.val-table tbody');
+        var rows = tbody.querySelectorAll('tr');
+        var btn = document.querySelector("button[onclick='highlightFamily()']");
+        var elements = document.querySelectorAll('.actual-num');
+
+        if (isFamilyOn) {
+            elements.forEach(function(el) {
+                el.style.backgroundColor = '';
+                el.style.color = '';
+                el.style.border = '';
+                el.style.padding = '';
+                el.style.borderRadius = '';
+                el.innerText = el.getAttribute('data-val');
+            });
+            isFamilyOn = false;
+            btn.innerText = "Same Family (Rashi)";
+            return;
+        }
+
+        function getFamilySet(val) {
+            if(!val || val.length !== 2) return [];
+            var a = parseInt(val[0]);
+            var b = parseInt(val[1]);
+            var a2 = (a + 5) % 10;
+            var b2 = (b + 5) % 10;
+            return [
+                "" + a + b, "" + a + b2, "" + a2 + b, "" + a2 + b2,
+                "" + b + a, "" + b2 + a, "" + b + a2, "" + b2 + a2
+            ];
+        }
+
+        var familyFound = new Set();
+        
+        for (var col = 1; col <= 6; col++) {
+            for (var r = 0; r < rows.length - 1; r++) {
+                var cell = rows[r].cells[col];
+                if (!cell) continue;
+                var el = cell.querySelector('.actual-num');
+                if (!el) continue;
+                var val = el.getAttribute('data-val');
+                if (val === '-' || val === 'None' || val.length !== 2) continue;
+
+                var familySet = getFamilySet(val);
+                
+                // Check if next row (r+1) in the same column is in the same family
+                var nextCell = rows[r+1].cells[col];
+                if (nextCell) {
+                    var nextEl = nextCell.querySelector('.actual-num');
+                    if (nextEl) {
+                        var nextVal = nextEl.getAttribute('data-val');
+                        if (familySet.includes(nextVal)) {
+                            familyFound.add(el);
+                            familyFound.add(nextEl);
+                        }
+                    }
+                }
+            }
+        }
+
+        familyFound.forEach(function(el) {
+            el.style.backgroundColor = 'rgba(26, 188, 156, 0.2)';
+            el.style.color = '#1abc9c';
+            el.style.border = '1px solid #16a085';
+            el.style.borderRadius = '4px';
+            el.style.padding = '2px 4px';
+            el.style.display = 'inline-block';
+            el.style.fontWeight = 'bold';
+            el.innerText = '👨‍👩‍👦 ' + el.getAttribute('data-val');
+        });
+
+        isFamilyOn = true;
+        btn.innerText = "Remove Family";
+    }
+
+    // Column Drag and Drop
+    function allowDrop(ev) {
+        ev.preventDefault();
+    }
+
+    function dragStart(ev, catName) {
+        ev.dataTransfer.setData("text/plain", catName);
+    }
+
+    function drop(ev, targetCat) {
+        ev.preventDefault();
+        var draggedCat = ev.dataTransfer.getData("text/plain");
+        if (draggedCat === targetCat) return;
+
+        var thElements = document.querySelectorAll('th.draggable-th');
+        var cats = [];
+        thElements.forEach(function(th) {
+            cats.push(th.innerText.replace('↕', '').trim());
+        });
+
+        var fromIndex = cats.indexOf(draggedCat);
+        var toIndex = cats.indexOf(targetCat);
+        cats.splice(fromIndex, 1);
+        cats.splice(toIndex, 0, draggedCat);
+
+        var url = new URL(window.location.href);
+        url.searchParams.set('order', cats.join(','));
+        window.location.href = url.toString();
+    }
+
+    // AI Recommendation & Progression Engine
+    function calculateAIRecommendation() {
+        var tbody = document.querySelector('.val-table tbody');
+        var rows = tbody.querySelectorAll('tr');
+        if (!rows || rows.length === 0) return;
+
+        // Data arrays from oldest (bottom of table) to newest (top of table)
+        // Wait, standard HTML table generated by django forloop goes top (oldest/newest?)
+        // The index in django loops over range(test_start, max_len). So row 0 is oldest index.
+        // So rows[0] is oldest, rows[length-1] is newest.
+        
+        function trackSteps(sequence) {
+            var step = 1;
+            var stats = {1:0, 2:0, 3:0, 4:0, 5:0, 'fail':0};
+            var totalWins = 0;
+            for (var i=0; i<sequence.length; i++) {
+                if (sequence[i] === '✔') {
+                    if(step <= 5) stats[step]++;
+                    else stats['fail']++;
+                    totalWins++;
+                    step = 1;
+                } else if (sequence[i] === '✘') {
+                    step++;
+                }
+            }
+            return {stats: stats, total: totalWins};
+        }
+
+        // 1. Chronological Sequence (row by row, col by col)
+        var chronoSeq = [];
+        for (var r = 0; r < rows.length; r++) {
+            for (var c = 7; c <= 12; c++) { // NUMBER columns are 7 to 12
+                var cell = rows[r].cells[c];
+                if(cell) {
+                    var txt = cell.innerText.trim();
+                    if(txt.includes('✔')) chronoSeq.push('✔');
+                    else if(txt.includes('✘')) chronoSeq.push('✘');
+                }
+            }
+        }
+        var chronoRes = trackSteps(chronoSeq);
+
+        // 2. Market-Wise Sequence
+        var marketRes = {};
+        for (var c = 7; c <= 12; c++) {
+            var mSeq = [];
+            for (var r = 0; r < rows.length; r++) {
+                var cell = rows[r].cells[c];
+                if(cell) {
+                    var txt = cell.innerText.trim();
+                    if(txt.includes('✔')) mSeq.push('✔');
+                    else if(txt.includes('✘')) mSeq.push('✘');
+                }
+            }
+            marketRes[c] = trackSteps(mSeq);
+        }
+
+        // Find best strategy (Lowest fail rate, highest early win rate)
+        var bestMarketCol = 7;
+        var bestMarketScore = -1;
+        for (var c = 7; c <= 12; c++) {
+            var s = marketRes[c].stats;
+            var total = marketRes[c].total || 1;
+            var score = ((s[1] + s[2] + s[3]) / total) * 100;
+            if (score > bestMarketScore) {
+                bestMarketScore = score;
+                bestMarketCol = c;
+            }
+        }
+        
+        var cTotal = chronoRes.total || 1;
+        var chronoScore = ((chronoRes.stats[1] + chronoRes.stats[2] + chronoRes.stats[3]) / cTotal) * 100;
+
+        var headerNames = [];
+        document.querySelectorAll('th.draggable-th').forEach(th => headerNames.push(th.innerText.replace('↕','').trim()));
+
+        var suggestionBox = document.getElementById('ai-suggestion-text');
+        var statsBox = document.getElementById('ai-stats-breakdown');
+        
+        if (chronoScore > bestMarketScore) {
+            suggestionBox.innerHTML = "<strong>Recommended: Play Chronologically (All Markets).</strong><br>Start with " + headerNames[0] + " and jump to the next market if you lose. This sequence has the highest historical recovery rate.";
+            renderStats(chronoRes.stats, cTotal, statsBox);
+        } else {
+            var mName = headerNames[bestMarketCol - 7];
+            suggestionBox.innerHTML = "<strong>Recommended: Play Only " + mName + " (Market-Wise).</strong><br>Do not jump between markets. Stick to " + mName + " day by day. It has the most stable recovery rate in the last " + rows.length + " days.";
+            renderStats(marketRes[bestMarketCol].stats, marketRes[bestMarketCol].total, statsBox);
+        }
+    }
+
+    function renderStats(stats, total, container) {
+        if(total === 0) total = 1;
+        var html = "";
+        for(var i=1; i<=5; i++) {
+            var pct = ((stats[i] / total) * 100).toFixed(1);
+            html += "<div style='background:#3f3f5a; padding:10px; border-radius:5px; text-align:center;'><strong>Step " + i + "</strong><br><span style='color:#00ff88'>" + pct + "%</span></div>";
+        }
+        var failPct = ((stats['fail'] / total) * 100).toFixed(1);
+        html += "<div style='background:rgba(255,51,102,0.2); padding:10px; border-radius:5px; text-align:center; border:1px solid #ff3366;'><strong>Failed 5+</strong><br><span style='color:#ff3366'>" + failPct + "%</span></div>";
+        container.innerHTML = html;
+    }
+
+    // Call AI Rec on load
+    window.addEventListener('load', calculateAIRecommendation);
+
+    var currentProgMode = null;
+    function toggleProgression(mode) {
+        var tbody = document.querySelector('.val-table tbody');
+        var rows = tbody.querySelectorAll('tr');
+        var btnC = document.querySelector("button[onclick=\"toggleProgression('chrono')\"]");
+        var btnM = document.querySelector("button[onclick=\"toggleProgression('market')\"]");
+
+        // Clear existing progression spans
+        document.querySelectorAll('.prog-step').forEach(e => e.remove());
+        btnC.innerText = "Progression: All Markets";
+        btnM.innerText = "Progression: Market-Wise";
+
+        if (currentProgMode === mode) {
+            currentProgMode = null; // Toggle off
+            return;
+        }
+
+        currentProgMode = mode;
+        if(mode === 'chrono') btnC.innerText = "Remove Progression (All)";
+        if(mode === 'market') btnM.innerText = "Remove Progression (Market)";
+
+        if (mode === 'chrono') {
+            var step = 1;
+            for (var r = 0; r < rows.length; r++) {
+                for (var c = 7; c <= 12; c++) {
+                    var cell = rows[r].cells[c];
+                    if(!cell) continue;
+                    var txt = cell.innerText.trim();
+                    if(txt.includes('✔') || txt.includes('✘')) {
+                        var span = document.createElement('span');
+                        span.className = 'prog-step';
+                        span.style.fontSize = '0.85em';
+                        span.style.marginLeft = '5px';
+                        span.style.fontWeight = 'bold';
+                        
+                        if(txt.includes('✔')) {
+                            span.style.color = '#00ff88';
+                            span.innerText = '(S-' + step + ')';
+                            step = 1; // reset
+                        } else {
+                            span.style.color = '#ff3366';
+                            span.innerText = '(S-' + step + ')';
+                            step++;
+                        }
+                        // Append next to the existing inner span
+                        var inner = cell.querySelector('span');
+                        if(inner) inner.appendChild(span);
+                    }
+                }
+            }
+        } else if (mode === 'market') {
+            for (var c = 7; c <= 12; c++) {
+                var step = 1;
+                for (var r = 0; r < rows.length; r++) {
+                    var cell = rows[r].cells[c];
+                    if(!cell) continue;
+                    var txt = cell.innerText.trim();
+                    if(txt.includes('✔') || txt.includes('✘')) {
+                        var span = document.createElement('span');
+                        span.className = 'prog-step';
+                        span.style.fontSize = '0.85em';
+                        span.style.marginLeft = '5px';
+                        span.style.fontWeight = 'bold';
+                        
+                        if(txt.includes('✔')) {
+                            span.style.color = '#00ff88';
+                            span.innerText = '(S-' + step + ')';
+                            step = 1; // reset
+                        } else {
+                            span.style.color = '#ff3366';
+                            span.innerText = '(S-' + step + ')';
+                            step++;
+                        }
+                        var inner = cell.querySelector('span');
+                        if(inner) inner.appendChild(span);
+                    }
+                }
+            }
+        }
+    }
+    // Pattern Matcher Logic (A = ✔, B = ✘)
+    function clearPatternHighlights() {
+        document.querySelectorAll('.pattern-highlight').forEach(function(e) {
+            e.style.border = '';
+            e.style.backgroundColor = '';
+            e.style.padding = '';
+            e.style.borderRadius = '';
+            e.classList.remove('pattern-highlight');
+        });
+    }
+
+    function highlightPattern(patternType) {
+        clearPatternHighlights();
+        var tbody = document.querySelector('.val-table tbody');
+        var rows = tbody.querySelectorAll('tr');
+        var pArr = patternType.split('');
+        var seqLength = pArr.length;
+
+        // Iterate market columns (7 to 12)
+        for (var c = 7; c <= 12; c++) {
+            for (var r = 0; r <= rows.length - seqLength; r++) {
+                var match = true;
+                for (var i = 0; i < seqLength; i++) {
+                    var cell = rows[r + i].cells[c];
+                    if (!cell) { match = false; break; }
+                    var txt = cell.innerText.trim();
+                    var expected = pArr[i] === 'A' ? '✔' : '✘';
+                    if (!txt.includes(expected)) {
+                        match = false;
+                        break;
+                    }
+                }
+                
+                if (match) {
+                    for (var i = 0; i < seqLength; i++) {
+                        var cell = rows[r + i].cells[c];
+                        var inner = cell.querySelector('span');
+                        if (inner) {
+                            inner.style.border = '2px solid #fdcb6e';
+                            inner.style.backgroundColor = 'rgba(253, 203, 110, 0.2)';
+                            inner.style.padding = '2px';
+                            inner.style.borderRadius = '4px';
+                            inner.classList.add('pattern-highlight');
+                        }
+                    }
+                }
+            }
+        }
     }
 </script>
 

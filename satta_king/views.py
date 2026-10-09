@@ -1,10 +1,21 @@
 from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 from .models import DailyNumber
 from .services import predict_heuristic, predict_ml, get_tens, get_ones
 import json
 
+@login_required
 def dashboard(request):
-    categories = ['DSWR', 'DLBZ', 'SRGN', 'FRBD', 'GZBD', 'GALI']
+    default_categories = ['DSWR', 'DLBZ', 'SRGN', 'FRBD', 'GZBD', 'GALI']
+    
+    order_param = request.GET.get('order')
+    if order_param:
+        categories = order_param.split(',')
+        # Fallback for missing ones
+        categories += [c for c in default_categories if c not in categories]
+    else:
+        categories = default_categories
+    
     
     timings = {
         'DSWR': {'moti': '1.30', 'last': '4.00'},
@@ -120,6 +131,17 @@ def dashboard(request):
                 
     next_index = max(all_indices) + 1 if all_indices else 0
 
+    win_rates = {}
+    for cat in categories:
+        total = 0
+        wins = 0
+        for row in validation_data:
+            if cat in row['num_oks'] and row['num_oks'][cat] not in ["-", ""]:
+                total += 1
+                if row['num_oks'][cat] == "✔":
+                    wins += 1
+        win_rates[cat] = round((wins / total) * 100, 1) if total > 0 else 0
+
     context = {
         'categories': categories,
         'validation_data': validation_data,
@@ -129,6 +151,7 @@ def dashboard(request):
         'predict_count': predict_count,
         'tens_ones_count': tens_ones_count,
         'validation_rows': validation_rows,
-        'model_type': model_type
+        'model_type': model_type,
+        'win_rates': win_rates
     }
     return render(request, 'satta_king/dashboard.html', context)
