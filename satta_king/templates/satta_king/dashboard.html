@@ -696,29 +696,46 @@
             return;
         }
 
-        elements.forEach(function(el) {
-            var val = el.getAttribute('data-val');
-            if (val && val !== '-' && val !== 'None') {
-                var num = parseInt(val, 10);
-                if (!isNaN(num)) {
-                    if (num >= 50) {
-                        el.style.backgroundColor = 'rgba(39, 174, 96, 0.2)';
-                        el.style.color = '#2ecc71';
-                        el.style.border = '1px solid #27ae60';
-                        el.innerText = val + ' (H)';
-                    } else {
-                        el.style.backgroundColor = 'rgba(230, 126, 34, 0.2)';
-                        el.style.color = '#e67e22';
-                        el.style.border = '1px solid #d35400';
-                        el.innerText = val + ' (L)';
+        var tbody = document.querySelector('.val-table tbody');
+        var rows = tbody.querySelectorAll('tr');
+
+        for (var c = 1; c <= 6; c++) {
+            for (var r = 0; r < rows.length; r++) {
+                var cell = rows[r].cells[c];
+                var resultCell = rows[r].cells[c + 6]; // The corresponding NUMBER cell with ✔/✘
+                if (!cell || !resultCell) continue;
+                
+                var el = cell.querySelector('.actual-num');
+                if (!el) continue;
+                
+                var val = el.getAttribute('data-val');
+                var resultTxt = resultCell.innerText.trim();
+                var icon = "";
+                if (resultTxt.includes('✔')) icon = " ✔";
+                else if (resultTxt.includes('✘')) icon = " ✘";
+
+                if (val && val !== '-' && val !== 'None') {
+                    var num = parseInt(val, 10);
+                    if (!isNaN(num)) {
+                        if (num >= 50) {
+                            el.style.backgroundColor = 'rgba(39, 174, 96, 0.2)';
+                            el.style.color = '#2ecc71';
+                            el.style.border = '1px solid #27ae60';
+                            el.innerText = val + ' (H)' + icon;
+                        } else {
+                            el.style.backgroundColor = 'rgba(230, 126, 34, 0.2)';
+                            el.style.color = '#e67e22';
+                            el.style.border = '1px solid #d35400';
+                            el.innerText = val + ' (L)' + icon;
+                        }
+                        el.style.borderRadius = '4px';
+                        el.style.padding = '2px 4px';
+                        el.style.display = 'inline-block';
+                        el.style.fontWeight = 'bold';
                     }
-                    el.style.borderRadius = '4px';
-                    el.style.padding = '2px 4px';
-                    el.style.display = 'inline-block';
-                    el.style.fontWeight = 'bold';
                 }
             }
-        });
+        }
         isHighLowOn = true;
         btn.innerText = "Remove High / Low";
     }
