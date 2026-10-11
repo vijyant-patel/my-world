@@ -155,3 +155,86 @@ def dashboard(request):
         'win_rates': win_rates
     }
     return render(request, 'satta_king/dashboard.html', context)
+
+
+from django.http import JsonResponse
+
+@login_required
+def api_magic_numbers(request):
+    categories = ['DSWR', 'DLBZ', 'SRGN', 'FRBD', 'GZBD', 'GALI']
+    all_indices = list(DailyNumber.objects.values_list('index_num', flat=True).distinct().order_by('index_num'))
+    
+    # Flatten history into a chronological sequence
+    sequence = []
+    for idx in all_indices:
+        records = DailyNumber.objects.filter(index_num=idx)
+        cat_map = {r.category: r.number for r in records}
+        for cat in categories:
+            if cat in cat_map and cat_map[cat] is not None:
+                sequence.append(cat_map[cat])
+
+    target_count = int(request.GET.get('count', 47))
+    
+    # Greedy optimization to find best subset
+    best_set = set()
+    
+    def calculate_gaps(current_set):
+        # Calculate how many 4-step misses exist in the sequence
+        # A miss is when a number is not in current_set
+        misses = 0
+        current_streak = 0
+        for num in sequence:
+            if num not in current_set:
+                current_streak += 1
+                if current_streak >= 4:
+                    misses += 1
+            else:
+                current_streak = 0
+        return misses
+
+    for _ in range(target_count):
+        best_candidate = -1
+        best_misses = float('inf')
+        
+        for n in range(100):
+            if n in best_set:
+                continue
+            
+            test_set = best_set.copy()
+            test_set.add(n)
+            
+            misses = calculate_gaps(test_set)
+            if misses < best_misses:
+                best_misses = misses
+                best_candidate = n
+                
+        best_set.add(best_candidate)
+
+    # Final stats for the selected 47 numbers
+    final_stats = {1:0, 2:0, 3:0, 4:0, 5:0, 'fail':0}
+    current_streak = 0
+    total_wins = 0
+    max_streak = 0
+    
+    for num in sequence:
+        if num in best_set:
+            step = current_streak + 1
+            if step <= 5:
+                final_stats[step] += 1
+            else:
+                final_stats['fail'] += 1
+            total_wins += 1
+            current_streak = 0
+        else:
+            current_streak += 1
+            if current_streak > max_streak:
+                max_streak = current_streak
+
+    return JsonResponse({
+        'numbers': sorted(list(best_set)),
+        'never_appeared': sorted([n for n in best_set if n not in sequence]),
+        'total_wins': total_wins,
+        'stats': final_stats,
+        'max_losing_streak': max_streak,
+        'history_length': len(sequence)
+    })

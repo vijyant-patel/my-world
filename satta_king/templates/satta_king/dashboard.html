@@ -139,13 +139,30 @@
     </div>
 
     <!-- AI Recommendation Engine -->
-    <div class="card" id="ai-recommendation-box" style="border: 2px solid #6c5ce7; background: rgba(108, 92, 231, 0.1);">
+    <div class="card" id="ai-recommendation-box" style="border: 2px solid #6c5ce7; background: rgba(108, 92, 231, 0.1); position: relative;">
         <h2 style="color: #a29bfe; margin-top: 0;">💡 AI Strategy Recommender</h2>
+        
+        <div style="position: absolute; top: 15px; right: 15px; display: flex; align-items: center; gap: 8px;">
+            <label style="color: #a29bfe; font-size: 14px; font-weight: bold;">Count:</label>
+            <input type="number" id="magicCountInput" value="47" min="1" max="99" style="width: 50px; padding: 6px; border-radius: 4px; border: 1px solid #e84393; background: #1e1e2f; color: white; font-weight: bold;">
+            <button onclick="fetchMagicNumbers()" id="magicBtn" style="padding: 8px 12px; background: #e84393; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">✨ Find Magic Numbers</button>
+        </div>
         <div id="ai-suggestion-text" style="font-size: 16px; line-height: 1.5; margin-bottom: 15px;">
             Analyzing historical data to find the safest progression strategy...
         </div>
         <div id="ai-stats-breakdown" class="grid" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; font-size: 14px;">
             <!-- Stats will be populated by JS -->
+        </div>
+
+        <div id="magic-results" style="display: none; margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.3); border: 1px solid #e84393; border-radius: 6px;">
+            <h3 style="margin-top: 0; color: #e84393;">✨ Best 47 Numbers Found!</h3>
+            <p style="margin-bottom: 5px;">Historically optimized to minimize losing streaks across all markets.</p>
+            <div id="magic-stats" style="margin-bottom: 10px; font-weight: bold; color: #00cec9;"></div>
+            <div id="magic-nums-list" style="font-family: monospace; font-size: 16px; color: #00ff88; letter-spacing: 2px; line-height: 1.6; word-break: break-all;"></div>
+            <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-top: 1px solid rgba(232, 67, 147, 0.3); padding-top: 10px;">
+                <span style="font-size: 13px; color: #fdcb6e;">⭐ Rows jahan sirf <strong>1</strong> baar magic number aaya hai, wo table me highlight hain.</span>
+                <button onclick="clearMagicHighlights()" style="padding: 6px 12px; font-size: 12px; background: #636e72; color: #fff; border: none; border-radius: 4px; cursor: pointer;">Clear Magic Highlights</button>
+            </div>
         </div>
     </div>
 
@@ -1141,6 +1158,155 @@
         var failPct = ((stats['fail'] / total) * 100).toFixed(1);
         html += "<div style='background:rgba(255,51,102,0.2); padding:10px; border-radius:5px; text-align:center; border:1px solid #ff3366;'><strong>Failed 5+</strong><br><span style='color:#ff3366'>" + failPct + "%</span></div>";
         container.innerHTML = html;
+    }
+
+    function fetchMagicNumbers() {
+        var btn = document.getElementById("magicBtn");
+        var resBox = document.getElementById("magic-results");
+        var statsDiv = document.getElementById("magic-stats");
+        var numList = document.getElementById("magic-nums-list");
+        var countInput = document.getElementById("magicCountInput").value || 47;
+
+        btn.innerText = "⏳ Optimizing...";
+        btn.disabled = true;
+
+        fetch('/inventory/magic/?count=' + countInput)
+            .then(response => response.json())
+            .then(data => {
+                btn.innerText = "✨ Find Magic Numbers";
+                btn.disabled = false;
+                resBox.style.display = "block";
+                
+                var titleElement = resBox.querySelector('h3');
+                if (titleElement) titleElement.innerText = "✨ Best " + data.numbers.length + " Numbers Found!";
+                
+                var never = data.never_appeared || [];
+                var numsFormattedHtml = data.numbers.map(n => {
+                    var s = n < 10 ? '0'+n : ''+n;
+                    if (never.includes(n)) {
+                        return `<span style="color: #ff7675; text-decoration: underline;" title="This number never appeared in history">${s}</span>`;
+                    }
+                    return s;
+                }).join(', ');
+                numList.innerHTML = numsFormattedHtml;
+
+                // Also need flat array for highlighting in table
+                var numsFormatted = data.numbers.map(n => n < 10 ? '0'+n : ''+n);
+
+                var totalPlayed = data.history_length;
+                var totalWon = data.total_wins;
+                var s1 = ((data.stats['1'] / totalWon) * 100).toFixed(1);
+                var s2 = ((data.stats['2'] / totalWon) * 100).toFixed(1);
+                var s3 = ((data.stats['3'] / totalWon) * 100).toFixed(1);
+                var s4 = ((data.stats['4'] / totalWon) * 100).toFixed(1);
+                
+                statsDiv.innerHTML = `Tested over ${totalPlayed} total games in history.<br>` +
+                                     `Max Losing Streak: ${data.max_losing_streak} games.<br>` +
+                                     `Win within Step 1: ${s1}% | Step 2: ${s2}% | Step 3: ${s3}% | Step 4: ${s4}%`;
+
+                // Automatically highlight these numbers in the table and count per row
+                var tbody = document.querySelector('.val-table tbody');
+                var rows = tbody.querySelectorAll('tr');
+                
+                rows.forEach(row => {
+                    var hitCount = 0;
+                    for (var c = 1; c <= 6; c++) {
+                        var cell = row.cells[c];
+                        if (!cell) continue;
+                        var el = cell.querySelector('.actual-num');
+                        if (!el) continue;
+                        
+                        var val = el.getAttribute('data-val');
+                        if (val && val !== '-' && numsFormatted.includes(val)) {
+                            hitCount++;
+                            el.style.backgroundColor = 'rgba(232, 67, 147, 0.2)';
+                            el.style.color = '#e84393';
+                            el.style.border = '1px solid #e84393';
+                            el.style.borderRadius = '4px';
+                            el.style.padding = '2px 4px';
+                            el.style.display = 'inline-block';
+                            el.style.fontWeight = 'bold';
+                            el.innerText = '✨ ' + val;
+                        } else if (val && val !== '-') {
+                            el.style.backgroundColor = '';
+                            el.style.color = '';
+                            el.style.border = '';
+                            el.style.borderRadius = '';
+                            el.style.padding = '';
+                            el.style.fontWeight = '';
+                            el.innerText = val;
+                        }
+                    }
+                    
+                    // Show count next to index
+                    var indexCell = row.cells[0];
+                    if (indexCell) {
+                        var countSpan = indexCell.querySelector('.magic-count');
+                        if (!countSpan) {
+                            countSpan = document.createElement('span');
+                            countSpan.className = 'magic-count';
+                            countSpan.style.marginLeft = '8px';
+                            countSpan.style.fontWeight = 'bold';
+                            countSpan.style.fontSize = '0.9em';
+                            indexCell.appendChild(countSpan);
+                        }
+                        if (hitCount > 0) {
+                            countSpan.innerText = '(' + hitCount + ')';
+                            countSpan.style.color = hitCount === 1 ? '#fdcb6e' : '#e84393';
+                        } else {
+                            countSpan.innerText = '';
+                        }
+                    }
+
+                    // Highlight row if magic number appeared exactly once (1 hit)
+                    if (hitCount === 1) {
+                        row.style.backgroundColor = 'rgba(253, 203, 110, 0.16)';
+                        row.style.boxShadow = 'inset 3px 0 0 #fdcb6e';
+                    } else {
+                        row.style.backgroundColor = '';
+                        row.style.boxShadow = '';
+                    }
+                });
+                
+            })
+            .catch(err => {
+                alert("Error fetching magic numbers.");
+                btn.innerText = "✨ Find Magic Numbers";
+                btn.disabled = false;
+            });
+    }
+
+    function clearMagicHighlights() {
+        var tbody = document.querySelector('.val-table tbody');
+        if (!tbody) return;
+        var rows = tbody.querySelectorAll('tr');
+        rows.forEach(row => {
+            row.style.backgroundColor = '';
+            row.style.boxShadow = '';
+            for (var c = 1; c <= 6; c++) {
+                var cell = row.cells[c];
+                if (!cell) continue;
+                var el = cell.querySelector('.actual-num');
+                if (!el) continue;
+                var val = el.getAttribute('data-val');
+                if (val && val !== '-') {
+                    el.style.backgroundColor = '';
+                    el.style.color = '';
+                    el.style.border = '';
+                    el.style.borderRadius = '';
+                    el.style.padding = '';
+                    el.style.fontWeight = '';
+                    el.innerText = val;
+                }
+            }
+            var indexCell = row.cells[0];
+            if (indexCell) {
+                var countSpan = indexCell.querySelector('.magic-count');
+                if (countSpan) countSpan.innerText = '';
+            }
+        });
+        var resBox = document.getElementById("magic-results");
+        if (resBox) resBox.style.display = "none";
     }
 
     // Call AI Rec on load
