@@ -164,77 +164,115 @@ def api_magic_numbers(request):
     categories = ['DSWR', 'DLBZ', 'SRGN', 'FRBD', 'GZBD', 'GALI']
     all_indices = list(DailyNumber.objects.values_list('index_num', flat=True).distinct().order_by('index_num'))
     
-    # Flatten history into a chronological sequence
+    data_by_index = {}
     sequence = []
     for idx in all_indices:
         records = DailyNumber.objects.filter(index_num=idx)
         cat_map = {r.category: r.number for r in records}
+        row_nums = []
         for cat in categories:
             if cat in cat_map and cat_map[cat] is not None:
-                sequence.append(cat_map[cat])
+                val = cat_map[cat]
+                row_nums.append(val)
+                sequence.append(val)
+        data_by_index[idx] = row_nums
 
+    valid_indices = [idx for idx in all_indices if len(data_by_index[idx]) > 0]
     target_count = int(request.GET.get('count', 47))
-    
-    # Greedy optimization to find best subset
-    best_set = set()
-    
-    def calculate_gaps(current_set):
-        # Calculate how many 4-step misses exist in the sequence
-        # A miss is when a number is not in current_set
-        misses = 0
-        current_streak = 0
-        for num in sequence:
-            if num not in current_set:
-                current_streak += 1
-                if current_streak >= 4:
-                    misses += 1
-            else:
-                current_streak = 0
-        return misses
+    target_count = max(1, min(99, target_count))
+    mode = request.GET.get('mode', 'hit') # 'hit' or 'avoid'
 
-    for _ in range(target_count):
-        best_candidate = -1
-        best_misses = float('inf')
-        
-        for n in range(100):
-            if n in best_set:
-                continue
-            
-            test_set = best_set.copy()
-            test_set.add(n)
-            
-            misses = calculate_gaps(test_set)
-            if misses < best_misses:
-                best_misses = misses
-                best_candidate = n
-                
-        best_set.add(best_candidate)
+    def get_magic_set_fast(training_rows, k):
+        if not training_rows or k <= 0:
+            return set()
+        num_to_rows = {n: [i for i, r in enumerate(training_rows) if n in r] for n in range(100)}
+        row_lens = [len(r) for r in training_rows]
+        selected = set()
+        current_hits = [0] * len(training_rows)
+        for _ in range(k):
+            best_n = -1
+            best_delta = 0
+            for n in range(100):
+                if n in selected:
+                    continue
+                delta = 0
+                for i in num_to_rows[n]:
+                    h = current_hits[i]
+                    m = row_lens[i] - h
+                    before = 1000 + m * m if h == 0 else (50 + m * m if h == 1 else m * m)
+                    h_new = h + 1
+                    m_new = m - 1
+                    after = 50 + m_new * m_new if h_new == 1 else m_new * m_new
+                    delta += (after - before)
+                if delta < best_delta:
+                    best_delta = delta
+                    best_n = n
+            if best_n == -1:
+                remaining = [n for n in range(100) if n not in selected]
+                if remaining:
+                    best_n = remaining[0]
+                else:
+                    break
+            selected.add(best_n)
+            for i in num_to_rows[best_n]:
+                current_hits[i] += 1
+        return selected
 
-    # Final stats for the selected 47 numbers
-    final_stats = {1:0, 2:0, 3:0, 4:0, 5:0, 'fail':0}
-    current_streak = 0
-    total_wins = 0
-    max_streak = 0
-    
-    for num in sequence:
-        if num in best_set:
-            step = current_streak + 1
-            if step <= 5:
-                final_stats[step] += 1
-            else:
-                final_stats['fail'] += 1
-            total_wins += 1
-            current_streak = 0
+    def predict_for_rows(history_rows):
+        if mode == 'avoid':
+            # To get K numbers that should NOT come,
+            # we isolate the top (100 - K) numbers that have a chance to come,
+            # and take the remaining K numbers as the safest drop/avoid numbers.
+            top_k = max(1, min(99, 100 - target_count))
+            top_set = get_magic_set_fast(history_rows, top_k)
+            return set(range(100)) - top_set
         else:
-            current_streak += 1
-            if current_streak > max_streak:
-                max_streak = current_streak
+            return get_magic_set_fast(history_rows, target_count)
+
+    # 1. True Walk-Forward Simulation:
+    # For every row, predict strictly using the history before that row
+    row_validations = {}
+    hits_list = []
+    min_history = 10
+    
+    for pos, current_idx in enumerate(valid_indices):
+        if pos < min_history:
+            continue
+        history_rows = [data_by_index[i] for i in valid_indices[:pos]]
+        predicted_set = predict_for_rows(history_rows)
+        
+        actual_nums = data_by_index[current_idx]
+        matched = [f"{x:02d}" for x in actual_nums if x in predicted_set]
+        hits = len(matched)
+        hits_list.append(hits)
+        
+        row_validations[str(current_idx)] = {
+            'hits': hits,
+            'matched': matched,
+            'total': len(actual_nums),
+            'preds': [f"{x:02d}" for x in sorted(list(predicted_set))]
+        }
+
+    # 2. Future numbers for upcoming next game using 100% available data
+    all_rows = [data_by_index[i] for i in valid_indices]
+    future_set = predict_for_rows(all_rows)
+
+    zero_hits = hits_list.count(0)
+    one_hits = hits_list.count(1)
+    two_plus_hits = sum(1 for h in hits_list if h >= 2)
+    avg_hits = sum(hits_list) / len(hits_list) if hits_list else 0
 
     return JsonResponse({
-        'numbers': sorted(list(best_set)),
-        'never_appeared': sorted([n for n in best_set if n not in sequence]),
-        'total_wins': total_wins,
-        'stats': final_stats,
-        'max_losing_streak': max_streak,
-        'history_length': len(sequence)
+        'mode': mode,
+        'numbers': sorted(list(future_set)),
+        'never_appeared': sorted([n for n in future_set if n not in sequence]),
+        'row_validations': row_validations,
+        'history_length': len(sequence),
+        'row_stats': {
+            'zero_hits': zero_hits,
+            'one_hits': one_hits,
+            'two_plus_hits': two_plus_hits,
+            'avg_hits': round(avg_hits, 2),
+            'total_rows': len(hits_list),
+        }
     })

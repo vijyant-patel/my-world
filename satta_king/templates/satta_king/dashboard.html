@@ -142,10 +142,11 @@
     <div class="card" id="ai-recommendation-box" style="border: 2px solid #6c5ce7; background: rgba(108, 92, 231, 0.1); position: relative;">
         <h2 style="color: #a29bfe; margin-top: 0;">💡 AI Strategy Recommender</h2>
         
-        <div style="position: absolute; top: 15px; right: 15px; display: flex; align-items: center; gap: 8px;">
+        <div style="position: absolute; top: 15px; right: 15px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
             <label style="color: #a29bfe; font-size: 14px; font-weight: bold;">Count:</label>
             <input type="number" id="magicCountInput" value="47" min="1" max="99" style="width: 50px; padding: 6px; border-radius: 4px; border: 1px solid #e84393; background: #1e1e2f; color: white; font-weight: bold;">
-            <button onclick="fetchMagicNumbers()" id="magicBtn" style="padding: 8px 12px; background: #e84393; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">✨ Find Magic Numbers</button>
+            <button onclick="fetchMagicNumbers('hit')" id="magicBtn" style="padding: 8px 12px; background: #e84393; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">✨ Find Magic Numbers</button>
+            <button onclick="fetchMagicNumbers('avoid')" id="avoidBtn" style="padding: 8px 12px; background: #0984e3; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">🚫 Find Avoid / Cut Numbers</button>
         </div>
         <div id="ai-suggestion-text" style="font-size: 16px; line-height: 1.5; margin-bottom: 15px;">
             Analyzing historical data to find the safest progression strategy...
@@ -156,12 +157,15 @@
 
         <div id="magic-results" style="display: none; margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.3); border: 1px solid #e84393; border-radius: 6px;">
             <h3 style="margin-top: 0; color: #e84393;">✨ Best 47 Numbers Found!</h3>
-            <p style="margin-bottom: 5px;">Historically optimized to minimize losing streaks across all markets.</p>
+            <p id="magic-desc" style="margin-bottom: 5px;">Historically optimized to minimize losing streaks across all markets.</p>
             <div id="magic-stats" style="margin-bottom: 10px; font-weight: bold; color: #00cec9;"></div>
             <div id="magic-nums-list" style="font-family: monospace; font-size: 16px; color: #00ff88; letter-spacing: 2px; line-height: 1.6; word-break: break-all;"></div>
             <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-top: 1px solid rgba(232, 67, 147, 0.3); padding-top: 10px;">
-                <span style="font-size: 13px; color: #fdcb6e;">⭐ Rows jahan sirf <strong>1</strong> baar magic number aaya hai, wo table me highlight hain.</span>
-                <button onclick="clearMagicHighlights()" style="padding: 6px 12px; font-size: 12px; background: #636e72; color: #fff; border: none; border-radius: 4px; cursor: pointer;">Clear Magic Highlights</button>
+                <div style="font-size: 13px; line-height: 1.6;" id="magic-legend">
+                    <span style="color: #fdcb6e;">⭐ <strong>Gold/Yellow Row:</strong> Sirf 1 match (1 hit)</span> &nbsp;|&nbsp;
+                    <span style="color: #ff4d4d;">🚨 <strong>Red Row:</strong> 0 match (Ek bhi magic number nahi aaya)</span>
+                </div>
+                <button onclick="clearMagicHighlights()" style="padding: 6px 12px; font-size: 12px; background: #636e72; color: #fff; border: none; border-radius: 4px; cursor: pointer;">Clear Highlights</button>
             </div>
         </div>
     </div>
@@ -245,7 +249,7 @@
             </thead>
             <tbody>
                 {% for row in validation_data %}
-                <tr>
+                <tr data-index="{{ row.index }}">
                     <td><span class="index-link" onclick='openModal("{{ row.index }}", {{ row.preds_json|safe }})'><strong>{{ row.index }}</strong></span></td>
                     
                     <!-- ACTUAL -->
@@ -1160,25 +1164,62 @@
         container.innerHTML = html;
     }
 
-    function fetchMagicNumbers() {
-        var btn = document.getElementById("magicBtn");
+    function fetchMagicNumbers(mode) {
+        mode = mode || 'hit';
+        var magicBtn = document.getElementById("magicBtn");
+        var avoidBtn = document.getElementById("avoidBtn");
         var resBox = document.getElementById("magic-results");
         var statsDiv = document.getElementById("magic-stats");
         var numList = document.getElementById("magic-nums-list");
         var countInput = document.getElementById("magicCountInput").value || 47;
+        var legendDiv = document.getElementById("magic-legend");
+        var descP = document.getElementById("magic-desc");
 
-        btn.innerText = "⏳ Optimizing...";
-        btn.disabled = true;
+        if (mode === 'avoid') {
+            if (avoidBtn) { avoidBtn.innerText = "⏳ Finding Drop Numbers..."; avoidBtn.disabled = true; }
+        } else {
+            magicBtn.innerText = "⏳ Optimizing...";
+            magicBtn.disabled = true;
+        }
 
-        fetch('/inventory/magic/?count=' + countInput)
+        fetch('/inventory/magic/?count=' + countInput + '&mode=' + mode)
             .then(response => response.json())
             .then(data => {
-                btn.innerText = "✨ Find Magic Numbers";
-                btn.disabled = false;
+                magicBtn.innerText = "✨ Find Magic Numbers";
+                magicBtn.disabled = false;
+                if (avoidBtn) {
+                    avoidBtn.innerText = "🚫 Find Avoid / Cut Numbers";
+                    avoidBtn.disabled = false;
+                }
                 resBox.style.display = "block";
                 
                 var titleElement = resBox.querySelector('h3');
-                if (titleElement) titleElement.innerText = "✨ Best " + data.numbers.length + " Numbers Found!";
+                if (mode === 'avoid') {
+                    if (titleElement) {
+                        titleElement.innerText = "🚫 Numbers Predicted NOT to Come (" + data.numbers.length + " Numbers)";
+                        titleElement.style.color = "#0984e3";
+                    }
+                    if (descP) {
+                        descP.innerText = "Top numbers with highest chance to hit are excluded. These " + data.numbers.length + " numbers are the coldest and least likely to open.";
+                    }
+                    if (legendDiv) {
+                        legendDiv.innerHTML = '<span style="color: #00ff88;">⭐ <strong>Green Row:</strong> 0 Leaks (100% Success - Ek bhi nahi aaya)</span> &nbsp;|&nbsp; ' +
+                                              '<span style="color: #fdcb6e;">⚠️ <strong>Gold Row:</strong> 1 Leak</span> &nbsp;|&nbsp; ' +
+                                              '<span style="color: #ff7675;">🚨 <strong>Red Row:</strong> 2+ Leaks</span>';
+                    }
+                } else {
+                    if (titleElement) {
+                        titleElement.innerText = "✨ Recommended Numbers for Next Game (" + data.numbers.length + " Numbers)";
+                        titleElement.style.color = "#e84393";
+                    }
+                    if (descP) {
+                        descP.innerText = "Historically optimized using Strict Walk-Forward (Blind Test) to maximize hits per day.";
+                    }
+                    if (legendDiv) {
+                        legendDiv.innerHTML = '<span style="color: #fdcb6e;">⭐ <strong>Gold/Yellow Row:</strong> Sirf 1 match (1 hit)</span> &nbsp;|&nbsp; ' +
+                                              '<span style="color: #ff4d4d;">🚨 <strong>Red Row:</strong> 0 match (Ek bhi magic number nahi aaya)</span>';
+                    }
+                }
                 
                 var never = data.never_appeared || [];
                 var numsFormattedHtml = data.numbers.map(n => {
@@ -1189,44 +1230,90 @@
                     return s;
                 }).join(', ');
                 numList.innerHTML = numsFormattedHtml;
+                numList.style.color = mode === 'avoid' ? '#74b9ff' : '#00ff88';
 
-                // Also need flat array for highlighting in table
                 var numsFormatted = data.numbers.map(n => n < 10 ? '0'+n : ''+n);
 
-                var totalPlayed = data.history_length;
-                var totalWon = data.total_wins;
-                var s1 = ((data.stats['1'] / totalWon) * 100).toFixed(1);
-                var s2 = ((data.stats['2'] / totalWon) * 100).toFixed(1);
-                var s3 = ((data.stats['3'] / totalWon) * 100).toFixed(1);
-                var s4 = ((data.stats['4'] / totalWon) * 100).toFixed(1);
-                
-                statsDiv.innerHTML = `Tested over ${totalPlayed} total games in history.<br>` +
-                                     `Max Losing Streak: ${data.max_losing_streak} games.<br>` +
-                                     `Win within Step 1: ${s1}% | Step 2: ${s2}% | Step 3: ${s3}% | Step 4: ${s4}%`;
+                if (data.row_stats) {
+                    if (mode === 'avoid') {
+                        statsDiv.innerHTML = `<strong>True Walk-Forward Blind Test on ${data.row_stats.total_rows} Past Days (Avoid List):</strong><br>` +
+                                             `0 Leaks Days (100% Success - None Came): <strong style="color:#00ff88;">${data.row_stats.zero_hits}</strong><br>` +
+                                             `1 Leak Days: <strong style="color:#fdcb6e;">${data.row_stats.one_hits}</strong> | ` +
+                                             `2+ Leaks Days: <strong style="color:#ff7675;">${data.row_stats.two_plus_hits}</strong><br>` +
+                                             `Average Leaks per Day: <strong style="color:#74b9ff;">${data.row_stats.avg_hits} / 6</strong> numbers`;
+                    } else {
+                        statsDiv.innerHTML = `<strong>True Walk-Forward (Blind Test) on ${data.row_stats.total_rows} Past Days:</strong><br>` +
+                                             `Average Matches per Day: <strong style="color:#00ff88;">${data.row_stats.avg_hits} / 6</strong><br>` +
+                                             `2+ Matches Days: <strong style="color:#00ff88;">${data.row_stats.two_plus_hits}</strong> | ` +
+                                             `1 Match (Gold) Days: <strong style="color:#fdcb6e;">${data.row_stats.one_hits}</strong> | ` +
+                                             `0 Match (Red) Days: <strong style="color:${data.row_stats.zero_hits > 0 ? '#ff4d4d' : '#00ff88'};">${data.row_stats.zero_hits}</strong>`;
+                    }
+                }
 
-                // Automatically highlight these numbers in the table and count per row
+                // Automatically highlight these numbers in the table using STRICT row validations
                 var tbody = document.querySelector('.val-table tbody');
                 var rows = tbody.querySelectorAll('tr');
                 
                 rows.forEach(row => {
-                    var hitCount = 0;
+                    var idx = row.getAttribute('data-index');
+                    var rowVal = (data.row_validations && idx) ? data.row_validations[idx] : null;
+                    var matchedList = rowVal ? rowVal.matched : [];
+                    var hitCount = rowVal ? rowVal.hits : 0;
+                    var totalValid = rowVal ? rowVal.total : 0;
+
+                    if (!rowVal) {
+                        for (var c = 1; c <= 6; c++) {
+                            var cell = row.cells[c];
+                            if (!cell) continue;
+                            var el = cell.querySelector('.actual-num');
+                            if (!el) continue;
+                            var val = el.getAttribute('data-val');
+                            if (val && val !== '-' && val !== 'None') {
+                                totalValid++;
+                                if (numsFormatted.includes(val)) {
+                                    hitCount++;
+                                    matchedList.push(val);
+                                }
+                            }
+                        }
+                    }
+
                     for (var c = 1; c <= 6; c++) {
                         var cell = row.cells[c];
                         if (!cell) continue;
                         var el = cell.querySelector('.actual-num');
                         if (!el) continue;
-                        
                         var val = el.getAttribute('data-val');
-                        if (val && val !== '-' && numsFormatted.includes(val)) {
-                            hitCount++;
-                            el.style.backgroundColor = 'rgba(232, 67, 147, 0.2)';
-                            el.style.color = '#e84393';
-                            el.style.border = '1px solid #e84393';
-                            el.style.borderRadius = '4px';
-                            el.style.padding = '2px 4px';
-                            el.style.display = 'inline-block';
-                            el.style.fontWeight = 'bold';
-                            el.innerText = '✨ ' + val;
+                        if (val && val !== '-' && val !== 'None') {
+                            if (matchedList.includes(val)) {
+                                if (mode === 'avoid') {
+                                    el.style.backgroundColor = 'rgba(9, 132, 227, 0.25)';
+                                    el.style.color = '#74b9ff';
+                                    el.style.border = '1px solid #0984e3';
+                                    el.style.borderRadius = '4px';
+                                    el.style.padding = '2px 4px';
+                                    el.style.display = 'inline-block';
+                                    el.style.fontWeight = 'bold';
+                                    el.innerText = '🚫 ' + val;
+                                } else {
+                                    el.style.backgroundColor = 'rgba(232, 67, 147, 0.2)';
+                                    el.style.color = '#e84393';
+                                    el.style.border = '1px solid #e84393';
+                                    el.style.borderRadius = '4px';
+                                    el.style.padding = '2px 4px';
+                                    el.style.display = 'inline-block';
+                                    el.style.fontWeight = 'bold';
+                                    el.innerText = '✨ ' + val;
+                                }
+                            } else {
+                                el.style.backgroundColor = '';
+                                el.style.color = '';
+                                el.style.border = '';
+                                el.style.borderRadius = '';
+                                el.style.padding = '';
+                                el.style.fontWeight = '';
+                                el.innerText = val;
+                            }
                         } else if (val && val !== '-') {
                             el.style.backgroundColor = '';
                             el.style.color = '';
@@ -1250,29 +1337,67 @@
                             countSpan.style.fontSize = '0.9em';
                             indexCell.appendChild(countSpan);
                         }
-                        if (hitCount > 0) {
+                        if (totalValid > 0) {
                             countSpan.innerText = '(' + hitCount + ')';
-                            countSpan.style.color = hitCount === 1 ? '#fdcb6e' : '#e84393';
+                            if (mode === 'avoid') {
+                                if (hitCount === 0) {
+                                    countSpan.style.color = '#00ff88'; // 0 leaks = Perfect
+                                } else if (hitCount === 1) {
+                                    countSpan.style.color = '#fdcb6e'; // 1 leak
+                                } else {
+                                    countSpan.style.color = '#ff7675'; // 2+ leaks
+                                }
+                            } else {
+                                if (hitCount === 0) {
+                                    countSpan.style.color = '#ff4d4d'; // Red for 0 match
+                                } else if (hitCount === 1) {
+                                    countSpan.style.color = '#fdcb6e'; // Gold for 1 match
+                                } else {
+                                    countSpan.style.color = '#e84393'; // Pink for 2+ matches
+                                }
+                            }
                         } else {
                             countSpan.innerText = '';
                         }
                     }
 
-                    // Highlight row if magic number appeared exactly once (1 hit)
-                    if (hitCount === 1) {
-                        row.style.backgroundColor = 'rgba(253, 203, 110, 0.16)';
-                        row.style.boxShadow = 'inset 3px 0 0 #fdcb6e';
-                    } else {
-                        row.style.backgroundColor = '';
-                        row.style.boxShadow = '';
+                    // Row highlights:
+                    if (totalValid > 0) {
+                        if (mode === 'avoid') {
+                            if (hitCount === 0) {
+                                row.style.backgroundColor = 'rgba(0, 255, 136, 0.08)';
+                                row.style.boxShadow = 'inset 3px 0 0 #00ff88';
+                            } else if (hitCount >= 2) {
+                                row.style.backgroundColor = 'rgba(255, 118, 117, 0.12)';
+                                row.style.boxShadow = 'inset 3px 0 0 #ff7675';
+                            } else {
+                                row.style.backgroundColor = '';
+                                row.style.boxShadow = '';
+                            }
+                        } else {
+                            if (hitCount === 0) {
+                                row.style.backgroundColor = 'rgba(255, 77, 77, 0.16)';
+                                row.style.boxShadow = 'inset 3px 0 0 #ff4d4d';
+                            } else if (hitCount === 1) {
+                                row.style.backgroundColor = 'rgba(253, 203, 110, 0.16)';
+                                row.style.boxShadow = 'inset 3px 0 0 #fdcb6e';
+                            } else {
+                                row.style.backgroundColor = '';
+                                row.style.boxShadow = '';
+                            }
+                        }
                     }
                 });
                 
             })
             .catch(err => {
-                alert("Error fetching magic numbers.");
-                btn.innerText = "✨ Find Magic Numbers";
-                btn.disabled = false;
+                alert("Error fetching numbers.");
+                magicBtn.innerText = "✨ Find Magic Numbers";
+                magicBtn.disabled = false;
+                if (avoidBtn) {
+                    avoidBtn.innerText = "🚫 Find Avoid / Cut Numbers";
+                    avoidBtn.disabled = false;
+                }
             });
     }
 
